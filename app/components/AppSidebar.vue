@@ -24,123 +24,20 @@
       <!-- Menu de navegação -->
       <nav class="px-4 py-2 flex-1 overflow-y-auto">
         <ul class="space-y-1">
-          <!-- Dashboard -->
-          <li>
+          <li v-for="item in menuItems" :key="item.to">
             <NuxtLink 
-              to="/"
+              :to="item.to"
               class="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-muted group relative"
-              :class="$route.path === '/' ? 'bg-primary text-primary-foreground' : 'text-foreground/80 hover:text-foreground'"
+              :class="$route.path === item.to ? 'bg-primary text-primary-foreground' : 'text-foreground/80 hover:text-foreground'"
             >
               <font-awesome-icon 
-                icon="home" 
+                :icon="item.icon" 
                 class="w-5 h-5 mr-3" 
               />
-              <span>Dashboard</span>
-            </NuxtLink>
-          </li>
-
-          <!-- Pedidos -->
-          <li>
-            <NuxtLink 
-              to="/pedidos"
-              class="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-muted group relative"
-              :class="$route.path === '/pedidos' ? 'bg-primary text-primary-foreground' : 'text-foreground/80 hover:text-foreground'"
-            >
-              <font-awesome-icon 
-                icon="shopping-cart" 
-                class="w-5 h-5 mr-3" 
-              />
-              <span>Pedidos</span>
-            </NuxtLink>
-          </li>
-
-          <!-- Cardápio -->
-          <li>
-            <NuxtLink 
-              to="/cardapio"
-              class="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-muted group relative"
-              :class="$route.path === '/cardapio' ? 'bg-primary text-primary-foreground' : 'text-foreground/80 hover:text-foreground'"
-            >
-              <font-awesome-icon 
-                icon="utensils" 
-                class="w-5 h-5 mr-3" 
-              />
-              <span>Cardápio</span>
-            </NuxtLink>
-          </li>
-
-          <!-- Clientes -->
-          <li>
-            <NuxtLink 
-              to="/clientes"
-              class="flex items-center w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-muted group relative"
-              :class="$route.path === '/clientes' ? 'bg-primary text-primary-foreground' : 'text-foreground/80 hover:text-foreground'"
-            >
-              <font-awesome-icon 
-                icon="users" 
-                class="w-5 h-5 mr-3" 
-              />
-              <span>Clientes</span>
-            </NuxtLink>
-          </li>
-
-          <!-- Cupons de Desconto -->
-          <li>
-            <NuxtLink 
-              to="/cupons"
-              class="flex items-center w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-muted group relative"
-              :class="$route.path === '/cupons' ? 'bg-primary text-primary-foreground' : 'text-foreground/80 hover:text-foreground'"
-            >
-              <font-awesome-icon 
-                icon="ticket" 
-                class="w-5 h-5 mr-3" 
-              />
-              <span>Cupons de Desconto</span>
-            </NuxtLink>
-          </li>
-
-          <!-- Relatórios -->
-          <li>
-            <NuxtLink 
-              to="/relatorios"
-              class="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-muted group relative"
-              :class="$route.path === '/relatorios' ? 'bg-primary text-primary-foreground' : 'text-foreground/80 hover:text-foreground'"
-            >
-              <font-awesome-icon 
-                icon="chart-bar" 
-                class="w-5 h-5 mr-3" 
-              />
-              <span>Relatórios</span>
-            </NuxtLink>
-          </li>
-
-          <!-- Configurações -->
-          <li>
-            <NuxtLink 
-              to="/configuracoes"
-              class="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-muted group relative"
-              :class="$route.path === '/configuracoes' ? 'bg-primary text-primary-foreground' : 'text-foreground/80 hover:text-foreground'"
-            >
-              <font-awesome-icon 
-                icon="cog" 
-                class="w-5 h-5 mr-3" 
-              />
-              <span>Configurações</span>
-            </NuxtLink>
-          </li>
-
-          <!-- Ajuda -->
-          <li>
-            <NuxtLink 
-              to="/ajuda"
-              class="flex items-center w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-muted group relative"
-              :class="$route.path === '/ajuda' ? 'bg-primary text-primary-foreground' : 'text-foreground/80 hover:text-foreground'"
-            >
-              <font-awesome-icon 
-                icon="question-circle" 
-                class="w-5 h-5 mr-3" 
-              />
-              <span>Ajuda</span>
+              <span>{{ item.label }}</span>
+              <span v-if="item.badge" class="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                {{ item.badge }}
+              </span>
             </NuxtLink>
           </li>
         </ul>
@@ -211,131 +108,21 @@
       <!-- Menu de navegação mobile (mesmo conteúdo do desktop) -->
       <nav class="px-4 py-2 flex-1 overflow-y-auto">
         <ul class="space-y-1">
-          <!-- Dashboard -->
-          <li>
+          <li v-for="item in menuItems" :key="item.to">
             <NuxtLink 
-              to="/"
+              :to="item.to"
               @click="$emit('close-mobile')"
               class="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-muted group relative"
-              :class="$route.path === '/' ? 'bg-primary text-primary-foreground' : 'text-foreground/80 hover:text-foreground'"
+              :class="$route.path === item.to ? 'bg-primary text-primary-foreground' : 'text-foreground/80 hover:text-foreground'"
             >
               <font-awesome-icon 
-                icon="home" 
+                :icon="item.icon" 
                 class="w-5 h-5 mr-3" 
               />
-              <span>Dashboard</span>
-            </NuxtLink>
-          </li>
-
-          <!-- Pedidos -->
-          <li>
-            <NuxtLink 
-              to="/pedidos"
-              @click="$emit('close-mobile')"
-              class="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-muted group relative"
-              :class="$route.path === '/pedidos' ? 'bg-primary text-primary-foreground' : 'text-foreground/80 hover:text-foreground'"
-            >
-              <font-awesome-icon 
-                icon="shopping-cart" 
-                class="w-5 h-5 mr-3" 
-              />
-              <span>Pedidos</span>
-            </NuxtLink>
-          </li>
-
-          <!-- Cardápio -->
-          <li>
-            <NuxtLink 
-              to="/cardapio"
-              @click="$emit('close-mobile')"
-              class="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-muted group relative"
-              :class="$route.path === '/cardapio' ? 'bg-primary text-primary-foreground' : 'text-foreground/80 hover:text-foreground'"
-            >
-              <font-awesome-icon 
-                icon="utensils" 
-                class="w-5 h-5 mr-3" 
-              />
-              <span>Cardápio</span>
-            </NuxtLink>
-          </li>
-
-          <!-- Clientes -->
-          <li>
-            <NuxtLink 
-              to="/clientes"
-              @click="$emit('close-mobile')"
-              class="flex items-center w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-muted group relative"
-              :class="$route.path === '/clientes' ? 'bg-primary text-primary-foreground' : 'text-foreground/80 hover:text-foreground'"
-            >
-              <font-awesome-icon 
-                icon="users" 
-                class="w-5 h-5 mr-3" 
-              />
-              <span>Clientes</span>
-            </NuxtLink>
-          </li>
-
-          <!-- Cupons de Desconto -->
-          <li>
-            <NuxtLink 
-              to="/cupons"
-              @click="$emit('close-mobile')"
-              class="flex items-center w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-muted group relative"
-              :class="$route.path === '/cupons' ? 'bg-primary text-primary-foreground' : 'text-foreground/80 hover:text-foreground'"
-            >
-              <font-awesome-icon 
-                icon="ticket" 
-                class="w-5 h-5 mr-3" 
-              />
-              <span>Cupons de Desconto</span>
-            </NuxtLink>
-          </li>
-
-          <!-- Relatórios -->
-          <li>
-            <NuxtLink 
-              to="/relatorios"
-              @click="$emit('close-mobile')"
-              class="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-muted group relative"
-              :class="$route.path === '/relatorios' ? 'bg-primary text-primary-foreground' : 'text-foreground/80 hover:text-foreground'"
-            >
-              <font-awesome-icon 
-                icon="chart-bar" 
-                class="w-5 h-5 mr-3" 
-              />
-              <span>Relatórios</span>
-            </NuxtLink>
-          </li>
-
-          <!-- Configurações -->
-          <li>
-            <NuxtLink 
-              to="/configuracoes"
-              @click="$emit('close-mobile')"
-              class="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-muted group relative"
-              :class="$route.path === '/configuracoes' ? 'bg-primary text-primary-foreground' : 'text-foreground/80 hover:text-foreground'"
-            >
-              <font-awesome-icon 
-                icon="cog" 
-                class="w-5 h-5 mr-3" 
-              />
-              <span>Configurações</span>
-            </NuxtLink>
-          </li>
-
-          <!-- Ajuda -->
-          <li>
-            <NuxtLink 
-              to="/ajuda"
-              @click="$emit('close-mobile')"
-              class="flex items-center w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-muted group relative"
-              :class="$route.path === '/ajuda' ? 'bg-primary text-primary-foreground' : 'text-foreground/80 hover:text-foreground'"
-            >
-              <font-awesome-icon 
-                icon="question-circle" 
-                class="w-5 h-5 mr-3" 
-              />
-              <span>Ajuda</span>
+              <span>{{ item.label }}</span>
+              <span v-if="item.badge" class="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                {{ item.badge }}
+              </span>
             </NuxtLink>
           </li>
         </ul>
@@ -382,6 +169,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { getRoutePermission } from '../../shared/constants/route-permissions'
 
 // Props
 interface Props {
@@ -397,11 +185,47 @@ const emit = defineEmits<{
   'close-mobile': []
 }>()
 
-// Composables para empresa - SIMPLES
-const { nomeEmpresa, buscarNomeEmpresa } = process.client ? useEmpresa() : { 
+// Composables para empresa e permissões
+const { nomeEmpresa, buscarNomeEmpresa, temPermissao, empresaAtual } = process.client ? useEmpresa() : { 
   nomeEmpresa: ref('Carregando...'), 
-  buscarNomeEmpresa: async () => {} 
+  buscarNomeEmpresa: async () => {},
+  temPermissao: () => false,
+  empresaAtual: ref(null)
 }
+
+// Definir estrutura dos itens do menu
+interface MenuItem {
+  label: string
+  to: string
+  icon: string
+  badge?: string
+}
+
+// Menu items com verificação de permissão
+const menuItems = computed<MenuItem[]>(() => {
+  const items: MenuItem[] = [
+    { label: 'Dashboard', to: '/', icon: 'home' },
+    { label: 'Pedidos', to: '/pedidos', icon: 'shopping-cart' },
+    { label: 'Cardápio', to: '/cardapio', icon: 'utensils' },
+    { label: 'Clientes', to: '/clientes', icon: 'users' },
+    { label: 'Cupons de Desconto', to: '/cupons', icon: 'ticket' },
+    { label: 'Relatórios', to: '/relatorios', icon: 'chart-bar' },
+    { label: 'Usuários', to: '/usuarios', icon: 'user-cog' },
+    { label: 'Configurações', to: '/configuracoes', icon: 'cog' },
+    { label: 'Ajuda', to: '/ajuda', icon: 'question-circle' }
+  ]
+
+  // Filtrar itens baseado em permissões
+  return items.filter(item => {
+    const permission = getRoutePermission(item.to)
+    
+    // Se não requer permissão, sempre mostra
+    if (!permission) return true
+    
+    // Verifica se tem permissão
+    return temPermissao(permission.modulo, permission.acao)
+  })
+})
 
 // Composables - abordagem simplificada
 const userEmail = ref<string | null>(null)

@@ -1,5 +1,6 @@
 import { library, config } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { 
   faHome,
   faUsers,
@@ -60,7 +61,18 @@ import {
   faClock,
   faCopy,
   faGear,
-  faFloppyDisk
+  faFloppyDisk,
+  faUserCog,
+  faUserPlus,
+  faUserShield,
+  faUserTie,
+  faHeadset,
+  faMotorcycle,
+  faCrown,
+  faBan,
+  faEllipsisVertical,
+  faLock,
+  faPaperPlane
 } from '@fortawesome/free-solid-svg-icons'
 
 // Importar ícones de marca (brands)
@@ -129,12 +141,23 @@ library.add(
   faEye,
   faEyeSlash,
   faTicket,
-  faWhatsapp,
   faCalendar,
   faClock,
   faCopy,
   faGear,
-  faFloppyDisk
+  faFloppyDisk,
+  faUserCog,
+  faUserPlus,
+  faUserShield,
+  faUserTie,
+  faHeadset,
+  faMotorcycle,
+  faCrown,
+  faBan,
+  faEllipsisVertical,
+  faLock,
+  faPaperPlane,
+  faWhatsapp as IconDefinition
 )
 
 export default defineNuxtPlugin((nuxtApp) => {

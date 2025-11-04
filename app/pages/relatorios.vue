@@ -153,10 +153,10 @@
 <script setup lang="ts">
 import type { EstatisticasRelatorio } from '~/composables/useRelatorios'
 
-// Layout
+// Layout e permissões
 definePageMeta({
   layout: 'dashboard',
-  middleware: 'auth'
+  middleware: ['auth', 'permissions']
 })
 
 // Definir título da página

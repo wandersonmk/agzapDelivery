@@ -132,9 +132,10 @@ const createLineChart = () => {
   const ctx = lineChartRef.value.getContext('2d')
   if (!ctx) return
 
-  // Usar dados reais das vendas mensais
-  const labels = stats.value.vendasMensais.map(v => v.mes)
-  const data = stats.value.vendasMensais.map(v => v.receita)
+  // Usar dados reais das vendas mensais (com proteção)
+  const vendasMensais = stats.value.vendasMensais || []
+  const labels = vendasMensais.map(v => v.mes)
+  const data = vendasMensais.map(v => v.receita)
 
   new Chart(ctx, {
     type: 'line',

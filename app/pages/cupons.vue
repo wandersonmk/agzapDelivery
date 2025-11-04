@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import type { Cupom, CupomFormData } from '~/shared/types/cupom.types'
 
-// Aplica middleware de autenticação
+// Aplica middleware de autenticação e permissões
 definePageMeta({
-  middleware: 'auth',
+  middleware: ['auth', 'permissions'],
   layout: 'dashboard'
 })
 

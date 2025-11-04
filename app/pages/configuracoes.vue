@@ -1,7 +1,7 @@
 <script setup lang="ts">
-// Aplica middleware de autenticação
+// Aplica middleware de autenticação e permissões
 definePageMeta({
-  middleware: 'auth',
+  middleware: ['auth', 'permissions'],
   layout: 'dashboard'
 })
 

@@ -74,6 +74,7 @@
       
       <!-- Botão Novo Pedido -->
       <button
+        v-if="temPermissao('pedidos', 'criar')"
         @click="abrirModalNovoPedido"
         class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-md"
       >
@@ -216,6 +217,9 @@ const {
   pedidosDestacados,
   setModalAberto
 } = usePedidos()
+
+// Usar o composable de empresa para verificar permissões
+const { temPermissao } = useEmpresa()
 
 // Debug: Verificar se as funções foram carregadas
 console.log('[PedidosManager] Funções do composable:', {

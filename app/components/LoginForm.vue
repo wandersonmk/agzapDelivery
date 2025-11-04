@@ -63,8 +63,9 @@ async function handleLogin() {
     
     toast?.success('Login realizado com sucesso!')
     
-    console.log('LoginForm: Tentando navegar para /')
-    await navigateTo('/')
+    // Redireciona para pedidos (página padrão para todos os papéis)
+    console.log('LoginForm: Tentando navegar para /pedidos')
+    await navigateTo('/pedidos')
     console.log('LoginForm: NavigateTo executado')
   } catch (error) {
     console.error('LoginForm: Erro no login:', error)
