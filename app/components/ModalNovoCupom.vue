@@ -214,7 +214,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Cupom, CupomFormData } from '../../shared/types/cupom.types'
+import type { Cupom, CupomFormData } from '@shared/types/cupom.types'
 
 interface Props {
   isVisible: boolean

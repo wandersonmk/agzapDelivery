@@ -3,7 +3,7 @@ import type {
   PapelUsuario, 
   Permissoes,
   UsuarioEmpresaComDados 
-} from '../../shared/types/usuarios-empresas.types'
+} from '@shared/types/usuarios-empresas.types'
 
 // Interface para configurações da empresa
 export interface EmpresaConfig {

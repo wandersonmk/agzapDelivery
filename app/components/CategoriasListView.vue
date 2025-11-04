@@ -682,7 +682,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Categoria, Produto } from '../../shared/types/cardapio.types'
+import type { Categoria, Produto } from '@shared/types/cardapio.types'
 
 interface Props {
   categorias: Categoria[]

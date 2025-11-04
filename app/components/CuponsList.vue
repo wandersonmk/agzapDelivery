@@ -175,7 +175,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Cupom, CupomFilter } from '../../shared/types/cupom.types'
+import type { Cupom, CupomFilter } from '@shared/types/cupom.types'
 
 interface Props {
   cupons: Cupom[]

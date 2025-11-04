@@ -169,7 +169,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { getRoutePermission } from '../../shared/constants/route-permissions'
+import { getRoutePermission } from '@shared/constants/route-permissions'
 
 // Props
 interface Props {

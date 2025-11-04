@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { PAPEL_LABELS } from '../../shared/types/usuarios-empresas.types'
-import type { PapelUsuario } from '../../shared/types/usuarios-empresas.types'
+import { PAPEL_LABELS } from '@shared/types/usuarios-empresas.types'
+import type { PapelUsuario } from '@shared/types/usuarios-empresas.types'
 
 interface Props {
   usuario: {

@@ -1,4 +1,4 @@
-import type { Cupom, CupomFormData } from '../../shared/types/cupom.types'
+import type { Cupom, CupomFormData } from '@shared/types/cupom.types'
 
 export const useCupons = () => {
   // Só executar no cliente

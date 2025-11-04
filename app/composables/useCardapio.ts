@@ -1,4 +1,4 @@
-import type { CardapioState, Categoria, Produto } from '../../shared/types/cardapio.types'
+import type { CardapioState, Categoria, Produto } from '@shared/types/cardapio.types'
 
 export const useCardapio = () => {
   const supabase = useSupabaseClient()

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { PAPEL_LABELS, PERMISSOES_PADRAO } from '../../shared/types/usuarios-empresas.types'
-import type { PapelUsuario, Permissoes } from '../../shared/types/usuarios-empresas.types'
+import { PAPEL_LABELS, PERMISSOES_PADRAO } from '@shared/types/usuarios-empresas.types'
+import type { PapelUsuario, Permissoes } from '@shared/types/usuarios-empresas.types'
 
 interface Props {
   isOpen: boolean

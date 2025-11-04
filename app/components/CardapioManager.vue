@@ -79,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Categoria } from '../../shared/types/cardapio.types'
+import type { Categoria } from '@shared/types/cardapio.types'
 
 // Composables
 const { categorias, produtos, adicionarCategoria, carregarCardapio } = useCardapio()

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PAPEL_LABELS } from '../../shared/types/usuarios-empresas.types'
+import { PAPEL_LABELS } from '@shared/types/usuarios-empresas.types'
 
 definePageMeta({
   middleware: ['auth'], // Apenas autenticação, não precisa de permissão específica

@@ -9,7 +9,7 @@
  * - ROUTE_PERMISSIONS (mapeamento de rotas)
  */
 
-import { getRoutePermission } from '../../shared/constants/route-permissions'
+import { getRoutePermission } from '@shared/constants/route-permissions'
 
 export default defineNuxtRouteMiddleware(async (to, from) => {
   // No servidor, não executa verificação de permissões

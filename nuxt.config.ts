@@ -25,5 +25,13 @@ export default defineNuxtConfig({
         process.env.SUPABASE_ANON_KEY ||
         process.env.VITE_SUPABASE_ANON_KEY
     }
+  },
+  alias: {
+    '@shared': resolvePath(__dirname, './shared')
+  },
+  nitro: {
+    alias: {
+      '@shared': resolvePath(__dirname, './shared')
+    }
   }
 })

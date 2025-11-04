@@ -159,7 +159,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Produto } from '../../shared/types/cardapio.types'
+import type { Produto } from '@shared/types/cardapio.types'
 
 // Composables
 const { 
