@@ -1,26 +1,26 @@
 # 🔐 Teste do Sistema de Redefinição de Senha
 
 ## Pré-requisitos
-- ✅ Site URL configurada no Supabase: `https://pizza-vilha.vercel.app`
-- ✅ Redirect URLs configuradas: `https://pizza-vilha.vercel.app/**`
+- ✅ Site URL configurada no Supabase: `https://agzap-delivery.vercel.app`
+- ✅ Redirect URLs configuradas: `https://agzap-delivery.vercel.app/**`
 - ✅ Template de email corrigido (sem duplicação de URL)
 - ✅ Deploy no Vercel concluído
 
 ## Passo a Passo do Teste
 
 ### 1. Solicitar Recuperação de Senha
-1. Acesse: https://pizza-vilha.vercel.app/recuperar-senha
+1. Acesse: https://agzap-delivery.vercel.app/recuperar-senha
 2. Digite um email cadastrado (ex: wandersoncnm@gmail.com)
 3. Clique em "Enviar instruções"
 4. **Resultado esperado:** 
    - ✅ Mensagem verde: "Email enviado com sucesso!"
-   - ✅ Console mostra: `[useAuth] Enviando email com redirect para: https://pizza-vilha.vercel.app/redefinir-senha`
+   - ✅ Console mostra: `[useAuth] Enviando email com redirect para: https://agzap-delivery.vercel.app/redefinir-senha`
 
 ### 2. Verificar Email
 1. Abra sua caixa de entrada
 2. Procure email do Supabase com assunto "Resete sua senha"
 3. **Verifique o link:** Deve conter `#access_token=` no final
-4. Exemplo: `https://pizza-vilha.vercel.app/redefinir-senha#access_token=xxx&refresh_token=yyy&type=recovery`
+4. Exemplo: `https://agzap-delivery.vercel.app/redefinir-senha#access_token=xxx&refresh_token=yyy&type=recovery`
 
 ### 3. Clicar no Link do Email
 1. Clique no link do email
@@ -78,8 +78,8 @@
 
 ## Checklist de Configuração do Supabase
 
-- [ ] Authentication > URL Configuration > Site URL: `https://pizza-vilha.vercel.app`
-- [ ] Authentication > URL Configuration > Redirect URLs: `https://pizza-vilha.vercel.app/**`
+- [ ] Authentication > URL Configuration > Site URL: `https://agzap-delivery.vercel.app`
+- [ ] Authentication > URL Configuration > Redirect URLs: `https://agzap-delivery.vercel.app/**`
 - [ ] Email Templates > Reset Password > Template correto (sem duplicação)
 - [ ] Authentication > Providers > Email habilitado
 - [ ] Authentication > Email Auth > Confirm email: Disabled (para testes) ou Enabled (produção)

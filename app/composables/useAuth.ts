@@ -185,8 +185,12 @@ export function useAuth() {
       isLoading.value = true
       errorMessage.value = null
 
-      // URL de redirecionamento fixa para evitar problemas
-      const redirectUrl = 'https://pizza-vilha.vercel.app/redefinir-senha'
+      // URL de redirecionamento dinâmica baseada no ambiente
+      const config = useRuntimeConfig()
+      const baseUrl = process.client 
+        ? window.location.origin 
+        : config.public.siteUrl || 'https://agzap-delivery.vercel.app'
+      const redirectUrl = `${baseUrl}/redefinir-senha`
       
       console.log('[useAuth] Enviando email com redirect para:', redirectUrl)
 
