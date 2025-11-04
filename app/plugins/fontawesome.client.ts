@@ -72,7 +72,10 @@ import {
   faBan,
   faEllipsisVertical,
   faLock,
-  faPaperPlane
+  faPaperPlane,
+  faAddressCard,
+  faChartLine,
+  faComment
 } from '@fortawesome/free-solid-svg-icons'
 
 // Importar ícones de marca (brands)
@@ -157,6 +160,9 @@ library.add(
   faEllipsisVertical,
   faLock,
   faPaperPlane,
+  faAddressCard,
+  faChartLine,
+  faComment,
   faWhatsapp as IconDefinition
 )
 

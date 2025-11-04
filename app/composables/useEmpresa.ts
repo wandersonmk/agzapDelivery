@@ -12,6 +12,7 @@ export interface EmpresaConfig {
   endereco: string | null
   telefone: string | null
   logotipo: string | null
+  cnpj?: string | null
   hora_abertura: string
   hora_fechamento: string
   tempo_estimado?: number
@@ -175,7 +176,7 @@ export function useEmpresa() {
 
       const { data, error } = await supabase
         .from('empresas')
-        .select('id, nome, endereco, telefone, logotipo, hora_abertura, hora_fechamento, tempo_estimado, aberto')
+        .select('id, nome, endereco, telefone, logotipo, cnpj, hora_abertura, hora_fechamento, tempo_estimado, aberto')
         .eq('id', empresaId)
         .single()
 

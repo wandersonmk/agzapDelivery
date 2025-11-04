@@ -35,6 +35,7 @@
           <AppInput
             v-model="configuracoes.telefone"
             placeholder="(11) 99999-9999"
+            @input="formatarTelefone"
             class="w-full"
           />
         </div>
@@ -58,6 +59,19 @@
             class="w-full"
           />
           <p class="text-xs text-muted-foreground">Cole a URL da imagem do seu logotipo</p>
+        </div>
+
+        <!-- CNPJ -->
+        <div class="space-y-2 md:col-span-2">
+          <label class="block text-sm font-medium text-foreground">CNPJ</label>
+          <AppInput
+            v-model="configuracoes.cnpj"
+            placeholder="00.000.000/0000-00"
+            @input="formatarCNPJ"
+            maxlength="18"
+            class="w-full"
+          />
+          <p class="text-xs text-muted-foreground">Será exibido no cupom fiscal</p>
         </div>
       </div>
     </div>
@@ -163,6 +177,7 @@ interface Configuracoes {
   telefone: string
   endereco: string
   logotipo: string
+  cnpj: string
 
   // Funcionamento (campos do banco)
   hora_abertura: string
@@ -178,6 +193,7 @@ const configuracoes = ref<Configuracoes>({
   telefone: '',
   endereco: '',
   logotipo: '',
+  cnpj: '',
 
   // Funcionamento
   hora_abertura: '18:00',
@@ -211,6 +227,52 @@ const showToast = async (message: string, type: 'success' | 'error' | 'info' = '
   }
 }
 
+// Função para formatar CNPJ
+const formatarCNPJ = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  let valor = input.value.replace(/\D/g, '') // Remove tudo que não é dígito
+  
+  // Limita a 14 dígitos (CNPJ válido)
+  if (valor.length > 14) {
+    valor = valor.substring(0, 14)
+  }
+  
+  // Aplica a máscara 00.000.000/0000-00
+  if (valor.length <= 14) {
+    valor = valor.replace(/^(\d{2})(\d)/, '$1.$2')
+    valor = valor.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+    valor = valor.replace(/\.(\d{3})(\d)/, '.$1/$2')
+    valor = valor.replace(/(\d{4})(\d)/, '$1-$2')
+  }
+  
+  configuracoes.value.cnpj = valor
+}
+
+// Função para formatar Telefone
+const formatarTelefone = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  let valor = input.value.replace(/\D/g, '') // Remove tudo que não é dígito
+  
+  // Limita a 11 dígitos (celular com DDD)
+  if (valor.length > 11) {
+    valor = valor.substring(0, 11)
+  }
+  
+  // Aplica a máscara (00) 00000-0000 ou (00) 0000-0000
+  if (valor.length <= 11) {
+    valor = valor.replace(/^(\d{2})(\d)/, '($1) $2')
+    if (valor.length > 10) {
+      // Celular: (00) 00000-0000
+      valor = valor.replace(/(\d{5})(\d)/, '$1-$2')
+    } else {
+      // Fixo: (00) 0000-0000
+      valor = valor.replace(/(\d{4})(\d)/, '$1-$2')
+    }
+  }
+  
+  configuracoes.value.telefone = valor
+}
+
 // Methods
 const carregarConfiguracoes = async () => {
   try {
@@ -223,6 +285,7 @@ const carregarConfiguracoes = async () => {
         telefone: config.telefone || '',
         endereco: config.endereco || '',
         logotipo: config.logotipo || '',
+        cnpj: config.cnpj || '',
         hora_abertura: config.hora_abertura || '18:00',
         hora_fechamento: config.hora_fechamento || '23:30',
         tempo_estimado: config.tempo_estimado?.toString() || '30',
@@ -252,6 +315,7 @@ const salvarConfiguracoes = async () => {
       telefone: configuracoes.value.telefone,
       endereco: configuracoes.value.endereco,
       logotipo: configuracoes.value.logotipo,
+      cnpj: configuracoes.value.cnpj,
       hora_abertura: configuracoes.value.hora_abertura,
       hora_fechamento: configuracoes.value.hora_fechamento,
       tempo_estimado: parseInt(configuracoes.value.tempo_estimado),

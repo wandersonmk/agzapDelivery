@@ -182,7 +182,7 @@
 
     <!-- Modal de Visualização do Pedido -->
     <PedidoModal
-      :isOpen="isModalOpen"
+      v-if="isModalOpen && selectedPedido"
       :pedido="selectedPedido"
       @close="closeModal"
       @accept="acceptOrder"
@@ -219,7 +219,14 @@ const {
 } = usePedidos()
 
 // Usar o composable de empresa para verificar permissões
-const { temPermissao } = useEmpresa()
+const { temPermissao, buscarConfiguracoes } = useEmpresa()
+
+// Buscar configurações da empresa
+const configEmpresa = ref<any>(null)
+
+onMounted(async () => {
+  configEmpresa.value = await buscarConfiguracoes()
+})
 
 // Debug: Verificar se as funções foram carregadas
 console.log('[PedidosManager] Funções do composable:', {
@@ -392,6 +399,22 @@ const updateOrderStatus = async (pedidoId: string, newStatus: string) => {
 }
 
 const printOrder = (pedido: Pedido) => {
+  // Debug: Verificar dados do pedido
+  console.log('🖨️ [PedidosManager] Imprimindo pedido:', {
+    numero: pedido.numero,
+    cliente: pedido.cliente,
+    items: pedido.items,
+    itemsLength: pedido.items?.length,
+    total: pedido.total
+  })
+  
+  // Verificar se items existe e tem conteúdo
+  if (!pedido.items || pedido.items.length === 0) {
+    console.error('❌ AVISO: Pedido sem itens!', pedido)
+    alert('Este pedido não possui itens para imprimir!')
+    return
+  }
+  
   // Criar janela de impressão
   const printWindow = window.open('', '_blank', 'width=300,height=600')
   
@@ -422,9 +445,9 @@ const printOrder = (pedido: Pedido) => {
           margin: 0;
           padding: 8px;
           width: 72mm;
-          color: #000;
+          color: #222;
           background: #fff;
-          font-weight: 600;
+          font-weight: normal;
         }
         
         .header {
@@ -438,6 +461,7 @@ const printOrder = (pedido: Pedido) => {
           font-size: 18px;
           font-weight: bold;
           margin-bottom: 4px;
+          color: #000;
         }
         
         .separator {
@@ -453,14 +477,16 @@ const printOrder = (pedido: Pedido) => {
           font-weight: bold;
           margin-bottom: 4px;
           font-size: 14px;
+          color: #000;
         }
         
         .item-line {
           display: flex;
           justify-content: space-between;
           margin-bottom: 2px;
-          font-weight: 600;
-          font-size: 15px;
+          font-weight: normal;
+          font-size: 14px;
+          color: #444;
         }
         
         .item-wrapper {
@@ -478,15 +504,17 @@ const printOrder = (pedido: Pedido) => {
         
         .item-name {
           flex: 1;
-          font-weight: 600;
-          font-size: 15px;
+          font-weight: normal;
+          font-size: 14px;
+          color: #444;
         }
         
         .item-price {
           text-align: right;
           min-width: 60px;
-          font-weight: 600;
-          font-size: 15px;
+          font-weight: normal;
+          font-size: 14px;
+          color: #444;
         }
         
         .total-line {
@@ -495,6 +523,7 @@ const printOrder = (pedido: Pedido) => {
           border-top: 1px solid #000;
           padding-top: 4px;
           margin-top: 8px;
+          color: #000;
         }
         
         .footer {
@@ -502,6 +531,7 @@ const printOrder = (pedido: Pedido) => {
           margin-top: 16px;
           border-top: 1px dashed #000;
           padding-top: 8px;
+          color: #444;
         }
         
         .obs {
@@ -509,8 +539,9 @@ const printOrder = (pedido: Pedido) => {
           padding: 4px;
           margin: 4px 0;
           border-left: 2px solid #666;
-          font-weight: 600;
-          font-size: 14px;
+          font-weight: normal;
+          font-size: 13px;
+          color: #444;
         }
         
         @media screen {
@@ -525,15 +556,15 @@ const printOrder = (pedido: Pedido) => {
     <body>
       <div class="header">
         <div style="font-size: 12px; margin-bottom: 4px;">CUPOM NAO FISCAL</div>
-        <div class="restaurant-name">Pizza'Vilha</div>
-        <div style="font-size: 14px; font-weight: 600;">Plataforma: Pizza'Vilha</div>
-        <div style="font-size: 14px; font-weight: 600; margin-top: 2px;">CNPJ: 54.534.693/0001-21</div>
+        <div class="restaurant-name">${configEmpresa.value?.nome || 'Empresa'}</div>
+        <div style="font-size: 14px; color: #444;"><strong style="color: #000;">Plataforma:</strong> Agzap Delivery</div>
+        ${configEmpresa.value?.cnpj ? `<div style="font-size: 14px; margin-top: 2px; color: #444;"><strong style="color: #000;">CNPJ:</strong> ${configEmpresa.value.cnpj}</div>` : ''}
       </div>
       
       <div class="section">
-        <div style="display: flex; justify-content: space-between;">
-          <span><strong>Pedido:</strong> #${pedido.numero}</span>
-          <span><strong>Data:</strong> ${formatDateTime(pedido.dataHora)}</span>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 2px; color: #444;">
+          <span><strong style="color: #000;">Pedido:</strong> #${pedido.numero}</span>
+          <span><strong style="color: #000;">Data:</strong> ${formatDateTime(pedido.dataHora)}</span>
         </div>
       </div>
       
@@ -541,15 +572,15 @@ const printOrder = (pedido: Pedido) => {
       
       <div class="section">
         <div class="section-title">CLIENTE:</div>
-        <div style="margin-bottom: 2px;">
-          <strong>Nome:</strong> ${pedido.cliente}
+        <div style="margin-bottom: 2px; color: #444;">
+          <strong style="color: #000;">Nome:</strong> ${pedido.cliente}
         </div>
-        <div style="margin-bottom: 2px;">
-          <strong>Telefone:</strong> ${pedido.telefone}
+        <div style="margin-bottom: 2px; color: #444;">
+          <strong style="color: #000;">Telefone:</strong> ${pedido.telefone}
         </div>
         ${pedido.endereco ? `
-          <div style="margin-top: 4px; padding-top: 4px; border-top: 1px dotted #ccc;">
-            <strong>Endereço:</strong><br/>
+          <div style="margin-top: 4px; padding-top: 4px; border-top: 1px dotted #ccc; color: #444;">
+            <strong style="color: #000;">Endereço:</strong><br/>
             ${pedido.endereco}
           </div>
         ` : '<div style="margin-top: 4px; padding: 4px; background: #f0f0f0; text-align: center;"><strong>RETIRADA NO BALCÃO</strong></div>'}
@@ -559,45 +590,48 @@ const printOrder = (pedido: Pedido) => {
       
       <div class="section">
         <div class="section-title">ITENS:</div>
-        ${pedido.items.map((item, index) => `
-          <div class="item-wrapper">
-            <div class="item-line">
-              <span class="item-name">${item.quantidade}x ${item.nome}</span>
-              <span class="item-price">R$ ${(item.quantidade * item.preco).toFixed(2)}</span>
+        ${pedido.items && pedido.items.length > 0 
+          ? pedido.items.map((item, index) => `
+            <div class="item-wrapper">
+              <div class="item-line">
+                <span class="item-name">${item.quantidade}x ${item.nome}</span>
+                <span class="item-price">R$ ${(item.quantidade * item.preco).toFixed(2)}</span>
+              </div>
+              ${item.observacao ? `<div class="obs">Obs: ${item.observacao}</div>` : ''}
+              ${index < pedido.items.length - 1 ? '<div class="item-separator">...................................</div>' : ''}
             </div>
-            ${item.observacao ? `<div class="obs">Obs: ${item.observacao}</div>` : ''}
-            ${index < pedido.items.length - 1 ? '<div class="item-separator">...................................</div>' : ''}
-          </div>
-        `).join('')}
+          `).join('')
+          : '<div style="padding: 8px; text-align: center; color: #999;">Nenhum item encontrado</div>'
+        }
       </div>
       
       <div class="separator"></div>
       
       <div class="section">
         <div class="item-line">
-          <span>Subtotal:</span>
-          <span>R$ ${(pedido.total - (pedido.valorEntrega || 0)).toFixed(2)}</span>
+          <span style="color: #555;"><strong style="color: #000;">Subtotal:</strong></span>
+          <span style="color: #555;">R$ ${(pedido.total - (pedido.valorEntrega || 0)).toFixed(2)}</span>
         </div>
         ${pedido.tipoEntrega === 'entrega' && pedido.valorEntrega ? `
           <div class="item-line">
-            <span>Taxa de entrega:</span>
-            <span>R$ ${pedido.valorEntrega.toFixed(2)}</span>
+            <span style="color: #555;"><strong style="color: #000;">Taxa de entrega:</strong></span>
+            <span style="color: #555;">R$ ${pedido.valorEntrega.toFixed(2)}</span>
           </div>
         ` : ''}
         <div class="item-line total-line">
-          <span>TOTAL:</span>
+          <span><strong>TOTAL:</strong></span>
           <span>R$ ${pedido.total.toFixed(2)}</span>
         </div>
       </div>
       
       <div class="section">
-        <div><strong>Pagamento:</strong> ${getPaymentLabel(pedido.formaPagamento).toUpperCase()}</div>
-        <div><strong>Tipo:</strong> ${pedido.tipoEntrega === 'entrega' ? 'ENTREGA' : 'RETIRADA'}</div>
+        <div style="color: #444;"><strong style="color: #000;">Pagamento:</strong> ${getPaymentLabel(pedido.formaPagamento).toUpperCase()}</div>
+        <div style="color: #444;"><strong style="color: #000;">Tipo:</strong> ${pedido.tipoEntrega === 'entrega' ? 'ENTREGA' : 'RETIRADA'}</div>
         ${pedido.troco ? `
-          <div><strong>Troco para:</strong> R$ ${pedido.troco.toFixed(2)}</div>
-          <div><strong>Troco:</strong> R$ ${(pedido.troco - pedido.total).toFixed(2)}</div>
+          <div style="color: #444;"><strong style="color: #000;">Troco para:</strong> R$ ${pedido.troco.toFixed(2)}</div>
+          <div style="color: #444;"><strong style="color: #000;">Troco:</strong> R$ ${(pedido.troco - pedido.total).toFixed(2)}</div>
         ` : ''}
-        ${pedido.tempoEstimado ? `<div><strong>Tempo estimado:</strong> ${pedido.tempoEstimado} min</div>` : ''}
+        ${pedido.tempoEstimado ? `<div style="color: #444;"><strong style="color: #000;">Tempo estimado:</strong> ${pedido.tempoEstimado} min</div>` : ''}
       </div>
       
       ${pedido.observacao ? `
@@ -610,8 +644,8 @@ const printOrder = (pedido: Pedido) => {
       
       <div class="footer">
         <div>Obrigado pela preferência!</div>
-        <div>Agzap Delivery</div>
         <div>${formatDateTime(new Date())}</div>
+        <div style="font-size: 10px; color: #666; margin-top: 8px;">Desenvolvido por Agzap</div>
       </div>
     </body>
     </html>

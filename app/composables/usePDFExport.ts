@@ -8,7 +8,7 @@ interface Cliente {
 
 export const usePDFExport = () => {
   
-  const exportarClientesPDF = async (clientes: Cliente[], filtrados: Cliente[] | null = null) => {
+  const exportarClientesPDF = async (clientes: Cliente[], filtrados: Cliente[] | null = null, configEmpresa?: any) => {
     // Verificar se está no cliente
     if (typeof window === 'undefined') {
       throw new Error('PDF export only available on client side')
@@ -41,7 +41,7 @@ export const usePDFExport = () => {
       doc.setTextColor(255, 255, 255)
       doc.setFontSize(24)
       doc.setFont('helvetica', 'bold')
-      doc.text('Agzap Delivery', margin, 25)
+      doc.text(configEmpresa?.nome || 'Agzap Delivery', margin, 25)
       
       // Subtítulo
       doc.setFontSize(14)
@@ -176,7 +176,7 @@ export const usePDFExport = () => {
       const footerY = doc.internal.pageSize.height - 10
       doc.setFontSize(8)
       doc.setTextColor(100)
-      doc.text('© 2025 Agzap Delivery - Sistema de Delivery', margin, footerY)
+      doc.text(`© 2025 ${configEmpresa?.nome || 'Agzap Delivery'} - Sistema de Delivery`, margin, footerY)
       
       // Gerar nome do arquivo
       const timestamp = agora.toISOString().split('T')[0]
@@ -199,7 +199,7 @@ export const usePDFExport = () => {
     }
   }
 
-  const exportarRelatoriosPDF = async (pedidos: any[], estatisticas: any) => {
+  const exportarRelatoriosPDF = async (pedidos: any[], estatisticas: any, configEmpresa?: any) => {
     // Verificar se está no cliente
     if (typeof window === 'undefined') {
       throw new Error('PDF export only available on client side')
@@ -225,7 +225,7 @@ export const usePDFExport = () => {
       // Título
       doc.setFontSize(20)
       doc.setFont('helvetica', 'bold')
-      doc.text('Relatório de Pedidos', margin, 20)
+      doc.text(`Relatório de Pedidos - ${configEmpresa?.nome || 'Agzap Delivery'}`, margin, 20)
       
       // Data do relatório
       doc.setFontSize(10)

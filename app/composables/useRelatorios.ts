@@ -9,6 +9,7 @@ export interface EstatisticasRelatorio {
 
 export interface TopCliente {
   nome: string
+  telefone: string
   pedidos: number
   valor: number
 }
@@ -97,6 +98,7 @@ export function useRelatorios() {
       const clientesMap = new Map<string, TopCliente>()
       pedidos.forEach((pedido: any) => {
         const nome = pedido.nome_cliente
+        const telefone = pedido.telefone_cliente
         const valor = parseFloat(pedido.valor_total || 0) + parseFloat(pedido.valor_entrega || 0)
 
         if (clientesMap.has(nome)) {
@@ -106,6 +108,7 @@ export function useRelatorios() {
         } else {
           clientesMap.set(nome, {
             nome,
+            telefone,
             pedidos: 1,
             valor
           })
@@ -119,6 +122,7 @@ export function useRelatorios() {
       // Análise de pagamentos
       const pagamentosDinheiro = pedidos.filter((p: any) => p.forma_pagamento === 'dinheiro').length
       const pagamentosCartao = pedidos.filter((p: any) => p.forma_pagamento === 'cartao').length
+      const pagamentosPix = pedidos.filter((p: any) => p.forma_pagamento === 'pix').length
 
       const analisePagamentos: AnalisePagamento[] = [
         {
@@ -132,6 +136,12 @@ export function useRelatorios() {
           label: 'Cartão',
           pedidos: pagamentosCartao,
           percentual: totalPedidos > 0 ? Math.round((pagamentosCartao / totalPedidos) * 100) : 0
+        },
+        {
+          tipo: 'pix',
+          label: 'PIX',
+          pedidos: pagamentosPix,
+          percentual: totalPedidos > 0 ? Math.round((pagamentosPix / totalPedidos) * 100) : 0
         }
       ]
 

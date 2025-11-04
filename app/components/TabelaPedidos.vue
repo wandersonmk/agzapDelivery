@@ -51,7 +51,8 @@
           <tr 
             v-for="pedido in pedidosFiltrados" 
             :key="pedido.id"
-            class="hover:bg-muted/50 transition-colors duration-150"
+            @click="$emit('pedido-click', pedido)"
+            class="hover:bg-muted/50 transition-colors duration-150 cursor-pointer"
           >
             <!-- Número do Pedido -->
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
@@ -183,6 +184,11 @@ const props = withDefaults(defineProps<Props>(), {
   pedidos: () => [],
   filtros: () => ({})
 })
+
+// Emits
+const emit = defineEmits<{
+  'pedido-click': [pedido: Pedido]
+}>()
 
 // Computed para pedidos filtrados
 const pedidosFiltrados = computed(() => {
@@ -335,39 +341,83 @@ const getStatusBadgeClass = (status: string) => {
 </script>
 
 <style scoped>
-/* Estilização da scrollbar para tema escuro */
-.overflow-auto {
+/* Estilização da scrollbar - adapta ao tema */
+.overflow-auto,
+.overflow-y-auto,
+.overflow-x-auto {
   scrollbar-width: thin;
-  scrollbar-color: #374151 #1f2937;
 }
 
-.overflow-auto::-webkit-scrollbar {
+/* Tema Claro (padrão) */
+.overflow-auto,
+.overflow-y-auto,
+.overflow-x-auto {
+  scrollbar-color: #d1d5db #f3f4f6;
+}
+
+.overflow-auto::-webkit-scrollbar,
+.overflow-y-auto::-webkit-scrollbar,
+.overflow-x-auto::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
-.overflow-auto::-webkit-scrollbar-track {
-  background: #1f2937;
+.overflow-auto::-webkit-scrollbar-track,
+.overflow-y-auto::-webkit-scrollbar-track,
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: #f3f4f6;
   border-radius: 4px;
 }
 
-.overflow-auto::-webkit-scrollbar-thumb {
-  background: #374151;
+.overflow-auto::-webkit-scrollbar-thumb,
+.overflow-y-auto::-webkit-scrollbar-thumb,
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #d1d5db;
   border-radius: 4px;
+  border: 1px solid #f3f4f6;
+}
+
+.overflow-auto::-webkit-scrollbar-thumb:hover,
+.overflow-y-auto::-webkit-scrollbar-thumb:hover,
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.overflow-auto::-webkit-scrollbar-corner,
+.overflow-y-auto::-webkit-scrollbar-corner,
+.overflow-x-auto::-webkit-scrollbar-corner {
+  background: #f3f4f6;
+}
+
+/* Tema Escuro */
+:deep(.dark) .overflow-auto,
+:deep(.dark) .overflow-y-auto,
+:deep(.dark) .overflow-x-auto {
+  scrollbar-color: #374151 #1f2937;
+}
+
+:deep(.dark) .overflow-auto::-webkit-scrollbar-track,
+:deep(.dark) .overflow-y-auto::-webkit-scrollbar-track,
+:deep(.dark) .overflow-x-auto::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+:deep(.dark) .overflow-auto::-webkit-scrollbar-thumb,
+:deep(.dark) .overflow-y-auto::-webkit-scrollbar-thumb,
+:deep(.dark) .overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #374151;
   border: 1px solid #1f2937;
 }
 
-.overflow-auto::-webkit-scrollbar-thumb:hover {
+:deep(.dark) .overflow-auto::-webkit-scrollbar-thumb:hover,
+:deep(.dark) .overflow-y-auto::-webkit-scrollbar-thumb:hover,
+:deep(.dark) .overflow-x-auto::-webkit-scrollbar-thumb:hover {
   background: #4b5563;
 }
 
-.overflow-auto::-webkit-scrollbar-corner {
+:deep(.dark) .overflow-auto::-webkit-scrollbar-corner,
+:deep(.dark) .overflow-y-auto::-webkit-scrollbar-corner,
+:deep(.dark) .overflow-x-auto::-webkit-scrollbar-corner {
   background: #1f2937;
-}
-
-/* Para Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #374151 #1f2937;
 }
 </style>

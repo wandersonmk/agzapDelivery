@@ -12,6 +12,7 @@ const props = withDefaults(defineProps<{
   autocomplete?: string
   name?: string
   id?: string
+  maxlength?: number
 }>(), {
   modelValue: '',
   type: 'text',
@@ -57,6 +58,7 @@ function togglePasswordVisibility() {
       :disabled="props.disabled"
       :readonly="props.readonly"
       :autocomplete="props.autocomplete"
+      :maxlength="props.maxlength"
       @input="onInput"
       class="w-full rounded-md text-foreground placeholder-muted-foreground focus-visible:outline-none focus-visible:ring-2 disabled:opacity-50 disabled:cursor-not-allowed border px-3 py-2"
       :class="{ 

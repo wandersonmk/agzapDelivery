@@ -866,10 +866,15 @@ const carregarDados = async () => {
       .eq('ativo', true)
       .order('nome')
 
-    produtos.value = prods || []
+    // Converter preço de string para número
+    produtos.value = (prods || []).map(prod => ({
+      ...prod,
+      preco: typeof prod.preco === 'string' ? parseFloat(prod.preco) : prod.preco
+    }))
     
     console.log('[ModalNovoPedido] Categorias carregadas:', categorias.value.length)
     console.log('[ModalNovoPedido] Produtos carregados:', produtos.value.length)
+    console.log('[ModalNovoPedido] Exemplo produto:', produtos.value[0])
   } catch (error) {
     console.error('Erro ao carregar dados:', error)
     toast.error('Erro ao carregar categorias e produtos')
@@ -1086,8 +1091,9 @@ const removerItem = (index: number) => {
 }
 
 // Formatar valor para exibição (0.00 -> 0,00)
-const formatarValorExibicao = (valor: number) => {
-  return valor.toFixed(2).replace('.', ',')
+const formatarValorExibicao = (valor: number | string) => {
+  const num = typeof valor === 'string' ? parseFloat(valor) : valor
+  return num.toFixed(2).replace('.', ',')
 }
 
 // Formatar valor da entrega

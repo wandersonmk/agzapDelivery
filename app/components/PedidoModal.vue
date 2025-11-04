@@ -1,81 +1,83 @@
 <template>
   <div
-    v-if="isOpen"
     class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
     @click.self="$emit('close')"
   >
-    <div class="bg-card border border-border rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden">
-      <!-- Header -->
-      <div class="flex items-center justify-between p-6 border-b border-border">
+    <div class="bg-card border border-border rounded-lg max-w-lg w-full max-h-[80vh] overflow-hidden shadow-2xl">
+      <!-- Header Ultra Compacto -->
+      <div class="flex items-center justify-between px-3 py-2 border-b border-border bg-muted/30">
         <div>
-          <h2 class="text-xl font-bold text-foreground">Pedido #{{ pedido?.numero }}</h2>
-          <p class="text-muted-foreground">{{ pedido?.dataHora.toLocaleString('pt-BR') }}</p>
+          <h2 class="text-base font-bold text-foreground">Pedido #{{ pedido?.numero }}</h2>
+          <p class="text-[10px] text-muted-foreground">{{ pedido?.dataHora.toLocaleString('pt-BR') }}</p>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5">
           <span :class="[
-            'px-3 py-1 text-sm font-medium rounded-full',
+            'px-1.5 py-0.5 text-[10px] font-medium rounded-full',
             getStatusColor(pedido?.status || '')
           ]">
             {{ getStatusLabel(pedido?.status || '') }}
           </span>
           <button
             @click="$emit('close')"
-            class="p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+            class="p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
           >
-            <font-awesome-icon icon="times" class="w-5 h-5" />
+            <font-awesome-icon icon="times" class="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
-      <!-- Conteúdo -->
-      <div class="overflow-y-auto max-h-[calc(90vh-200px)]">
-        <div class="p-6 space-y-6">
+      <!-- Conteúdo Ultra Compacto -->
+      <div class="overflow-y-auto max-h-[calc(80vh-110px)]">
+        <div class="p-3 space-y-2">
           <!-- Informações do Cliente -->
-          <div class="bg-muted/30 rounded-lg p-4">
-            <h3 class="font-semibold text-foreground mb-3">Informações do Cliente</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-muted/30 rounded p-2">
+            <h3 class="font-semibold text-xs text-foreground mb-1.5">Informações do Cliente</h3>
+            <div class="grid grid-cols-2 gap-1.5 text-xs">
               <div>
-                <label class="text-sm font-medium text-muted-foreground">Nome</label>
-                <p class="text-foreground">{{ pedido?.cliente }}</p>
+                <label class="text-[10px] font-medium text-muted-foreground">Nome</label>
+                <p class="text-foreground leading-tight">{{ pedido?.cliente }}</p>
               </div>
               <div>
-                <label class="text-sm font-medium text-muted-foreground">Telefone</label>
-                <p class="text-foreground">{{ pedido?.telefone }}</p>
+                <label class="text-[10px] font-medium text-muted-foreground">Telefone</label>
+                <p class="text-foreground leading-tight">{{ pedido?.telefone }}</p>
               </div>
-              <div v-if="pedido?.endereco" class="md:col-span-2">
-                <label class="text-sm font-medium text-muted-foreground">Endereço</label>
-                <p class="text-foreground">{{ pedido?.endereco }}</p>
+              <div v-if="pedido?.endereco" class="col-span-2">
+                <label class="text-[10px] font-medium text-muted-foreground">Endereço</label>
+                <p class="text-foreground text-xs leading-tight">{{ pedido?.endereco }}</p>
               </div>
             </div>
           </div>
 
-          <!-- Detalhes do Pedido -->
+          <!-- Itens do Pedido -->
           <div>
-            <h3 class="font-semibold text-foreground mb-3">Itens do Pedido</h3>
-            <div class="space-y-3">
+            <h3 class="font-semibold text-xs text-foreground mb-1.5">Itens do Pedido</h3>
+            <div v-if="!pedido?.items || pedido.items.length === 0" class="text-xs text-muted-foreground italic p-1.5 bg-muted/30 rounded">
+              Nenhum item encontrado
+            </div>
+            <div v-else class="space-y-1.5">
               <div
-                v-for="item in pedido?.items"
-                :key="item.nome"
-                class="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
+                v-for="(item, index) in pedido?.items"
+                :key="index"
+                class="flex items-start justify-between p-1.5 bg-muted/30 rounded text-xs"
               >
                 <div class="flex-1">
-                  <p class="font-medium text-foreground">{{ item.nome }}</p>
-                  <p v-if="item.observacao" class="text-sm text-muted-foreground mt-1">
+                  <p class="font-medium text-foreground leading-tight">{{ item.quantidade }}x {{ item.nome }}</p>
+                  <p v-if="item.observacao" class="text-[10px] text-muted-foreground mt-0.5">
                     Obs: {{ item.observacao }}
                   </p>
                 </div>
-                <div class="text-right">
-                  <p class="text-foreground">{{ item.quantidade }}x R$ {{ item.preco.toFixed(2) }}</p>
-                  <p class="font-semibold text-foreground">R$ {{ (item.quantidade * item.preco).toFixed(2) }}</p>
+                <div class="text-right ml-2">
+                  <p class="text-muted-foreground text-[10px]">R$ {{ item.preco.toFixed(2) }} un</p>
+                  <p class="font-semibold text-foreground text-xs">R$ {{ (item.quantidade * item.preco).toFixed(2) }}</p>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Resumo Financeiro -->
-          <div class="bg-muted/30 rounded-lg p-4">
-            <h3 class="font-semibold text-foreground mb-3">Resumo Financeiro</h3>
-            <div class="space-y-2">
+          <div class="bg-muted/30 rounded p-2">
+            <h3 class="font-semibold text-xs text-foreground mb-1.5">Resumo Financeiro</h3>
+            <div class="space-y-0.5 text-xs">
               <div class="flex justify-between">
                 <span class="text-muted-foreground">Subtotal</span>
                 <span class="text-foreground">R$ {{ (pedido?.total - (pedido?.valorEntrega || 0)).toFixed(2) }}</span>
@@ -84,75 +86,71 @@
                 <span class="text-muted-foreground">Taxa de entrega</span>
                 <span class="text-foreground">R$ {{ pedido.valorEntrega.toFixed(2) }}</span>
               </div>
-              <div class="flex justify-between text-lg font-bold border-t border-border pt-2">
+              <div class="flex justify-between font-bold text-sm pt-1 border-t border-border">
                 <span class="text-foreground">Total</span>
                 <span class="text-foreground">R$ {{ pedido?.total.toFixed(2) }}</span>
               </div>
             </div>
           </div>
 
-          <!-- Informações de Pagamento e Entrega -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="bg-muted/30 rounded-lg p-4">
-              <h4 class="font-medium text-foreground mb-2">Pagamento</h4>
+          <!-- Detalhes de Pagamento e Entrega -->
+          <div class="grid grid-cols-2 gap-1.5 text-xs">
+            <div class="bg-muted/30 rounded p-1.5">
+              <label class="text-[10px] font-medium text-muted-foreground block mb-0.5">Pagamento</label>
               <span :class="[
-                'px-2 py-1 text-sm rounded-full',
+                'inline-block px-1.5 py-0.5 text-[10px] font-medium rounded',
                 getPaymentColor(pedido?.formaPagamento || '')
               ]">
                 {{ getPaymentLabel(pedido?.formaPagamento || '') }}
               </span>
-              <div v-if="pedido?.troco" class="mt-2 space-y-1">
-                <p class="text-sm text-muted-foreground">Troco para: R$ {{ Number(pedido.troco).toFixed(2) }}</p>
-                <div 
-                  v-if="Number(pedido.troco) > Number(pedido.total)"
-                  class="p-2 bg-green-100 dark:bg-green-900/20 border border-green-300 dark:border-green-800 rounded-md"
-                >
-                  <p class="text-sm text-green-700 dark:text-green-400 font-medium">
-                    💰 Troco: R$ {{ (Number(pedido.troco) - Number(pedido.total)).toFixed(2) }}
-                  </p>
-                </div>
-                <div 
-                  v-else
-                  class="p-2 bg-blue-100 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-800 rounded-md"
-                >
-                  <p class="text-sm text-blue-700 dark:text-blue-400 font-medium">
-                    ℹ️ Não precisa de troco
-                  </p>
-                </div>
-              </div>
             </div>
-            <div class="bg-muted/30 rounded-lg p-4">
-              <h4 class="font-medium text-foreground mb-2">Entrega</h4>
+            <div class="bg-muted/30 rounded p-1.5">
+              <label class="text-[10px] font-medium text-muted-foreground block mb-0.5">Tipo</label>
               <span :class="[
-                'px-2 py-1 text-sm rounded-full',
-                pedido?.tipoEntrega === 'entrega' 
-                  ? 'bg-blue-100 text-blue-700' 
-                  : 'bg-gray-100 text-gray-700'
+                'inline-block px-1.5 py-0.5 text-[10px] font-medium rounded',
+                pedido?.tipoEntrega === 'entrega' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
               ]">
                 {{ pedido?.tipoEntrega === 'entrega' ? 'Entrega' : 'Retirada' }}
               </span>
-              <div v-if="pedido?.tempoEstimado" class="mt-2">
-                <p class="text-sm text-muted-foreground">Tempo estimado: {{ pedido.tempoEstimado }} min</p>
-              </div>
             </div>
           </div>
 
+          <!-- Troco -->
+          <div v-if="pedido?.troco" class="bg-muted/30 rounded p-1.5 text-xs">
+            <div class="flex justify-between mb-0.5">
+              <span class="text-muted-foreground text-[10px]">Troco para:</span>
+              <span class="text-foreground">R$ {{ Number(pedido.troco).toFixed(2) }}</span>
+            </div>
+            <div v-if="Number(pedido.troco) > Number(pedido.total)" class="flex justify-between font-medium">
+              <span class="text-foreground text-[10px]">Levar de troco:</span>
+              <span class="text-green-600 text-xs">R$ {{ (Number(pedido.troco) - Number(pedido.total)).toFixed(2) }}</span>
+            </div>
+            <div v-else class="text-[10px] text-blue-600 font-medium">
+              ℹ️ Não precisa de troco
+            </div>
+          </div>
+
+          <!-- Tempo Estimado -->
+          <div v-if="pedido?.tempoEstimado" class="text-[10px] text-muted-foreground text-center py-0.5">
+            ⏱️ Tempo estimado: {{ pedido.tempoEstimado }} minutos
+          </div>
+
           <!-- Observações -->
-          <div v-if="pedido?.observacao" class="bg-muted/30 rounded-lg p-4">
-            <h4 class="font-medium text-foreground mb-2">Observações</h4>
-            <p class="text-foreground">{{ pedido.observacao }}</p>
+          <div v-if="pedido?.observacao" class="bg-yellow-50 dark:bg-yellow-900/20 rounded p-1.5 border border-yellow-200 dark:border-yellow-800">
+            <h4 class="font-medium text-[10px] text-foreground mb-0.5">Observações</h4>
+            <p class="text-xs text-foreground leading-tight">{{ pedido.observacao }}</p>
           </div>
         </div>
       </div>
 
-      <!-- Footer com ações -->
-      <div class="p-6 border-t border-border">
-        <div class="flex items-center gap-3">
+      <!-- Footer Ultra Compacto -->
+      <div class="px-2 py-2 border-t border-border bg-muted/20">
+        <div class="flex flex-col gap-1.5">
           <!-- Botões de mudança de status -->
           <template v-if="pedido?.status === 'novo'">
             <button
               @click="acceptPedido"
-              class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              class="w-full bg-blue-600 hover:bg-blue-700 text-white px-2 py-1.5 rounded text-xs font-medium transition-colors"
             >
               ✅ Aceitar Pedido
             </button>
@@ -161,9 +159,9 @@
           <template v-else-if="pedido?.status === 'cozinha'">
             <button
               @click="markPedidoAsReady"
-              class="flex-1 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              class="w-full bg-orange-600 hover:bg-orange-700 text-white px-2 py-1.5 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1"
             >
-              <font-awesome-icon icon="utensils" class="w-4 h-4 mr-2" />
+              <font-awesome-icon icon="utensils" class="w-2.5 h-2.5" />
               Marcar como Pronto
             </button>
           </template>
@@ -171,20 +169,20 @@
           <template v-else-if="pedido?.status === 'entrega'">
             <button
               @click="completePedido"
-              class="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              class="w-full bg-purple-600 hover:bg-purple-700 text-white px-2 py-1.5 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1"
             >
-              <font-awesome-icon icon="check-circle" class="w-4 h-4 mr-2" />
+              <font-awesome-icon icon="check-circle" class="w-2.5 h-2.5" />
               Concluir Entrega
             </button>
           </template>
 
-          <!-- Botão de imprimir sempre disponível -->
+          <!-- Botão de imprimir centralizado -->
           <button
             @click="printPedido"
-            class="px-4 py-2 bg-muted hover:bg-muted/80 text-foreground rounded-lg font-medium transition-colors"
+            class="w-full bg-purple-600 hover:bg-purple-700 text-white px-2 py-1.5 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1"
           >
-            <font-awesome-icon icon="print" class="w-4 h-4 mr-2" />
-            Imprimir
+            <font-awesome-icon icon="print" class="w-2.5 h-2.5" />
+            Imprimir Pedido
           </button>
         </div>
       </div>
@@ -221,7 +219,6 @@ interface Pedido {
 }
 
 interface Props {
-  isOpen: boolean
   pedido: Pedido | null
 }
 
@@ -234,6 +231,23 @@ const emit = defineEmits<{
   ready: [pedidoId: string]
   complete: [pedidoId: string]
 }>()
+
+// Buscar configurações da empresa
+const { buscarConfiguracoes } = useEmpresa()
+const configEmpresa = ref<any>(null)
+
+onMounted(async () => {
+  configEmpresa.value = await buscarConfiguracoes()
+  
+  // Debug: Verificar dados do pedido ao montar o componente
+  console.log('🔍 [PedidoModal] Pedido recebido:', {
+    numero: props.pedido?.numero,
+    cliente: props.pedido?.cliente,
+    items: props.pedido?.items,
+    itemsLength: props.pedido?.items?.length,
+    total: props.pedido?.total
+  })
+})
 
 // Funções que emitem eventos para o componente pai (como os botões da tela principal)
 const acceptPedido = () => {
@@ -320,8 +334,14 @@ const printPedido = () => {
     cliente: props.pedido.cliente,
     telefone: props.pedido.telefone,
     items: props.pedido.items,
+    itemsLength: props.pedido.items?.length,
     total: props.pedido.total
   })
+  
+  // Verificar se items existe e tem conteúdo
+  if (!props.pedido.items || props.pedido.items.length === 0) {
+    console.error('AVISO: Pedido sem itens!', props.pedido)
+  }
   
   // Criar janela de impressão
   const printWindow = window.open('', '_blank', 'width=300,height=600')
@@ -353,9 +373,9 @@ const printPedido = () => {
           margin: 0;
           padding: 8px;
           width: 72mm;
-          color: #000;
+          color: #222;
           background: #fff;
-          font-weight: 600;
+          font-weight: normal;
         }
         
         .header {
@@ -369,6 +389,7 @@ const printPedido = () => {
           font-size: 18px;
           font-weight: bold;
           margin-bottom: 4px;
+          color: #000;
         }
         
         .separator {
@@ -384,14 +405,16 @@ const printPedido = () => {
           font-weight: bold;
           margin-bottom: 4px;
           font-size: 14px;
+          color: #000;
         }
         
         .item-line {
           display: flex;
           justify-content: space-between;
           margin-bottom: 2px;
-          font-weight: 600;
-          font-size: 15px;
+          font-weight: normal;
+          font-size: 14px;
+          color: #444;
         }
         
         .item-wrapper {
@@ -409,15 +432,17 @@ const printPedido = () => {
         
         .item-name {
           flex: 1;
-          font-weight: 600;
-          font-size: 15px;
+          font-weight: normal;
+          font-size: 14px;
+          color: #444;
         }
         
         .item-price {
           text-align: right;
           min-width: 60px;
-          font-weight: 600;
-          font-size: 15px;
+          font-weight: normal;
+          font-size: 14px;
+          color: #444;
         }
         
         .total-line {
@@ -426,6 +451,7 @@ const printPedido = () => {
           border-top: 1px solid #000;
           padding-top: 4px;
           margin-top: 8px;
+          color: #000;
         }
         
         .footer {
@@ -433,6 +459,7 @@ const printPedido = () => {
           margin-top: 16px;
           border-top: 1px dashed #000;
           padding-top: 8px;
+          color: #444;
         }
         
         .obs {
@@ -440,8 +467,9 @@ const printPedido = () => {
           padding: 4px;
           margin: 4px 0;
           border-left: 2px solid #666;
-          font-weight: 600;
-          font-size: 14px;
+          font-weight: normal;
+          font-size: 13px;
+          color: #444;
         }
         
         @media screen {
@@ -456,15 +484,15 @@ const printPedido = () => {
     <body>
       <div class="header">
         <div style="font-size: 12px; margin-bottom: 4px;">CUPOM NAO FISCAL</div>
-        <div class="restaurant-name">Pizza'Vilha</div>
-        <div style="font-size: 14px; font-weight: 600;">Plataforma: Pizza'Vilha</div>
-        <div style="font-size: 14px; font-weight: 600; margin-top: 2px;">CNPJ: 54.534.693/0001-21</div>
+        <div class="restaurant-name">${configEmpresa.value?.nome || 'Empresa'}</div>
+        <div style="font-size: 14px; color: #444;"><strong style="color: #000;">Plataforma:</strong> Agzap Delivery</div>
+        ${configEmpresa.value?.cnpj ? `<div style="font-size: 14px; margin-top: 2px; color: #444;"><strong style="color: #000;">CNPJ:</strong> ${configEmpresa.value.cnpj}</div>` : ''}
       </div>
       
       <div class="section">
-        <div style="display: flex; justify-content: space-between;">
-          <span><strong>Pedido:</strong> #${props.pedido.numero}</span>
-          <span><strong>Data:</strong> ${formatDateTime(props.pedido.dataHora)}</span>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 2px; color: #444;">
+          <span><strong style="color: #000;">Pedido:</strong> #${props.pedido.numero}</span>
+          <span><strong style="color: #000;">Data:</strong> ${formatDateTime(props.pedido.dataHora)}</span>
         </div>
       </div>
       
@@ -472,15 +500,15 @@ const printPedido = () => {
       
       <div class="section">
         <div class="section-title">CLIENTE:</div>
-        <div style="margin-bottom: 2px;">
-          <strong>Nome:</strong> ${props.pedido.cliente}
+        <div style="margin-bottom: 2px; color: #444;">
+          <strong style="color: #000;">Nome:</strong> ${props.pedido.cliente}
         </div>
-        <div style="margin-bottom: 2px;">
-          <strong>Telefone:</strong> ${props.pedido.telefone}
+        <div style="margin-bottom: 2px; color: #444;">
+          <strong style="color: #000;">Telefone:</strong> ${props.pedido.telefone}
         </div>
         ${props.pedido.endereco ? `
-          <div style="margin-top: 4px; padding-top: 4px; border-top: 1px dotted #ccc;">
-            <strong>Endereço:</strong><br/>
+          <div style="margin-top: 4px; padding-top: 4px; border-top: 1px dotted #ccc; color: #444;">
+            <strong style="color: #000;">Endereço:</strong><br/>
             ${props.pedido.endereco}
           </div>
         ` : '<div style="margin-top: 4px; padding: 4px; background: #f0f0f0; text-align: center;"><strong>RETIRADA NO BALCÃO</strong></div>'}
@@ -490,48 +518,51 @@ const printPedido = () => {
       
       <div class="section">
         <div class="section-title">ITENS:</div>
-        ${props.pedido.items.map((item, index) => `
-          <div class="item-wrapper">
-            <div class="item-line">
-              <span class="item-name">${item.quantidade}x ${item.nome}</span>
-              <span class="item-price">R$ ${(item.quantidade * item.preco).toFixed(2)}</span>
+        ${props.pedido.items && props.pedido.items.length > 0 
+          ? props.pedido.items.map((item, index) => `
+            <div class="item-wrapper">
+              <div class="item-line">
+                <span class="item-name">${item.quantidade}x ${item.nome}</span>
+                <span class="item-price">R$ ${(item.quantidade * item.preco).toFixed(2)}</span>
+              </div>
+              ${item.observacao ? `<div class="obs">Obs: ${item.observacao}</div>` : ''}
+              ${index < props.pedido.items.length - 1 ? '<div class="item-separator">...................................</div>' : ''}
             </div>
-            ${item.observacao ? `<div class="obs">Obs: ${item.observacao}</div>` : ''}
-            ${index < props.pedido.items.length - 1 ? '<div class="item-separator">...................................</div>' : ''}
-          </div>
-        `).join('')}
+          `).join('')
+          : '<div style="padding: 8px; text-align: center; color: #999;">Nenhum item encontrado</div>'
+        }
       </div>
       
       <div class="separator"></div>
       
       <div class="section">
         <div class="item-line">
-          <span>Subtotal:</span>
-          <span>R$ ${(props.pedido.total - (props.pedido.valorEntrega || 0)).toFixed(2)}</span>
+          <span style="color: #444;"><strong style="color: #000;">Subtotal:</strong></span>
+          <span style="color: #444;">R$ ${(props.pedido.total - (props.pedido.valorEntrega || 0)).toFixed(2)}</span>
         </div>
         ${props.pedido.tipoEntrega === 'entrega' && props.pedido.valorEntrega ? `
           <div class="item-line">
-            <span>Taxa de entrega:</span>
-            <span>R$ ${props.pedido.valorEntrega.toFixed(2)}</span>
+            <span style="color: #444;"><strong style="color: #000;">Taxa de entrega:</strong></span>
+            <span style="color: #444;">R$ ${props.pedido.valorEntrega.toFixed(2)}</span>
           </div>
         ` : ''}
         <div class="item-line total-line">
-          <span>TOTAL:</span>
+          <span><strong>TOTAL:</strong></span>
           <span>R$ ${props.pedido.total.toFixed(2)}</span>
         </div>
       </div>
       
       <div class="section">
-        <div><strong>Pagamento:</strong> ${getPaymentLabel(props.pedido.formaPagamento).toUpperCase()}</div>
-        <div><strong>Tipo:</strong> ${props.pedido.tipoEntrega === 'entrega' ? 'ENTREGA' : 'RETIRADA'}</div>
+        <div style="color: #444;"><strong style="color: #000;">Pagamento:</strong> ${getPaymentLabel(props.pedido.formaPagamento).toUpperCase()}</div>
+        <div style="color: #444;"><strong style="color: #000;">Tipo:</strong> ${props.pedido.tipoEntrega === 'entrega' ? 'ENTREGA' : 'RETIRADA'}</div>
         ${props.pedido.troco ? `
-          <div><strong>Troco para:</strong> R$ ${Number(props.pedido.troco).toFixed(2)}</div>
+          <div style="color: #444;"><strong style="color: #000;">Troco para:</strong> R$ ${Number(props.pedido.troco).toFixed(2)}</div>
           ${Number(props.pedido.troco) > Number(props.pedido.total) 
-            ? `<div><strong>Troco:</strong> R$ ${(Number(props.pedido.troco) - Number(props.pedido.total)).toFixed(2)}</div>`
-            : `<div><strong>Não precisa de troco</strong></div>`
+            ? `<div style="color: #444;"><strong style="color: #000;">Troco:</strong> R$ ${(Number(props.pedido.troco) - Number(props.pedido.total)).toFixed(2)}</div>`
+            : `<div style="color: #444;"><strong style="color: #000;">Não precisa de troco</strong></div>`
           }
         ` : ''}
-        ${props.pedido.tempoEstimado ? `<div><strong>Tempo estimado:</strong> ${props.pedido.tempoEstimado} min</div>` : ''}
+        ${props.pedido.tempoEstimado ? `<div style="color: #444;"><strong style="color: #000;">Tempo estimado:</strong> ${props.pedido.tempoEstimado} min</div>` : ''}
       </div>
       
       ${props.pedido.observacao ? `
@@ -544,8 +575,8 @@ const printPedido = () => {
       
       <div class="footer">
         <div>Obrigado pela preferência!</div>
-        <div>Agzap Delivery</div>
         <div>${formatDateTime(new Date())}</div>
+        <div style="font-size: 10px; color: #666; margin-top: 8px;">Desenvolvido por Agzap</div>
       </div>
     </body>
     </html>

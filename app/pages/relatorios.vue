@@ -93,6 +93,7 @@
       <TabelaPedidos 
         :pedidos="pedidos"
         :filtros="filtros"
+        @pedido-click="abrirDetalhesPedido"
       />
     </div>
 
@@ -108,7 +109,12 @@
           </h3>
         </div>
         <div class="p-6">
-          <div v-for="(cliente, index) in topClientes" :key="cliente.nome" class="flex items-center justify-between py-2">
+          <div 
+            v-for="(cliente, index) in topClientes" 
+            :key="cliente.nome" 
+            @click="abrirDetalhesCliente(cliente)"
+            class="flex items-center justify-between py-2 cursor-pointer hover:bg-muted/50 rounded-lg px-3 transition-colors"
+          >
             <div class="flex items-center">
               <span class="flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium mr-3" 
                     :class="index === 0 ? 'bg-yellow-100 text-yellow-800' : index === 1 ? 'bg-gray-100 text-gray-800' : index === 2 ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800'">
@@ -135,7 +141,11 @@
         <div class="p-6">
           <div v-for="pagamento in analisePagamentos" :key="pagamento.tipo" class="flex items-center justify-between py-2">
             <div class="flex items-center">
-              <div class="w-4 h-4 rounded mr-3" :class="pagamento.tipo === 'dinheiro' ? 'bg-green-500' : 'bg-blue-500'"></div>
+              <div class="w-4 h-4 rounded mr-3" :class="{
+                'bg-green-500': pagamento.tipo === 'dinheiro',
+                'bg-blue-500': pagamento.tipo === 'cartao',
+                'bg-orange-500': pagamento.tipo === 'pix'
+              }"></div>
               <span class="text-sm font-medium text-foreground">{{ pagamento.label }}</span>
             </div>
             <div class="text-right">
@@ -147,6 +157,20 @@
       </div>
       </div>
     </div>
+
+    <!-- Modal de Detalhes do Cliente -->
+    <ModalDetalhesCliente
+      :isOpen="isModalClienteOpen"
+      :cliente="clienteSelecionado"
+      @close="fecharDetalhesCliente"
+    />
+
+    <!-- Modal de Detalhes do Pedido -->
+    <PedidoModal
+      v-if="isModalPedidoOpen && pedidoSelecionado"
+      :pedido="pedidoSelecionado"
+      @close="fecharDetalhesPedido"
+    />
   </div>
 </template>
 
@@ -178,12 +202,17 @@ interface Filtros {
 const filtros = ref<Filtros>({})
 const isExportingPDF = ref(false)
 const isExportingExcel = ref(false)
+const isModalClienteOpen = ref(false)
+const clienteSelecionado = ref<any>(null)
 
 // Composables
 const { estatisticas, pedidosDetalhados, isLoading, buscarEstatisticas } = useRelatorios()
 const { exportarRelatoriosPDF } = usePDFExport()
 const { exportarRelatoriosExcel } = useExcelExport()
 const { showToast } = useToastSafe()
+
+// Supabase client - apenas no lado do cliente
+const supabase = process.client ? useSupabaseClient() : null
 
 // Computed
 const totalPedidos = computed(() => estatisticas.value?.totalPedidos || 0)
@@ -207,7 +236,8 @@ const exportarPDF = async () => {
     }
 
     isExportingPDF.value = true
-    const resultado = await exportarRelatoriosPDF(pedidos.value, estatisticas.value)
+    const configEmpresa = await buscarConfiguracoes()
+    const resultado = await exportarRelatoriosPDF(pedidos.value, estatisticas.value, configEmpresa)
     
     if (resultado.success) {
       showToast(`PDF gerado com sucesso! ${resultado.totalPedidos} pedidos exportados.`, 'success')
@@ -240,6 +270,162 @@ const exportarExcel = async () => {
   } finally {
     isExportingExcel.value = false
   }
+}
+
+// Funções do modal de cliente
+const abrirDetalhesCliente = async (cliente: any) => {
+  try {
+    if (!supabase) {
+      console.error('Supabase client não disponível')
+      return
+    }
+    
+    console.log('Abrindo detalhes do cliente:', cliente)
+    
+    // Buscar mais detalhes do cliente no banco de dados
+    const { data: clienteDetalhado, error } = await supabase
+      .from('clientes')
+      .select('*')
+      .eq('telefone', cliente.telefone)
+      .single()
+    
+    // Buscar a data do primeiro pedido do cliente
+    const { data: primeiroPedido } = await supabase
+      .from('pedidos')
+      .select('created_at')
+      .eq('telefone_cliente', cliente.telefone)
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .single()
+    
+    console.log('Cliente detalhado do banco:', clienteDetalhado, 'Erro:', error)
+    console.log('Primeiro pedido:', primeiroPedido)
+    
+    if (error) {
+      console.error('Erro ao buscar detalhes do cliente:', error)
+      // Usar dados básicos se não conseguir buscar detalhes
+      clienteSelecionado.value = {
+        nome: cliente.nome,
+        telefone: cliente.telefone,
+        qtdPedidos: cliente.pedidos,
+        valor: cliente.valor,
+        created_at: primeiroPedido?.created_at
+      }
+    } else {
+      // Combinar dados do relatório com dados do banco
+      clienteSelecionado.value = {
+        ...clienteDetalhado,
+        qtdPedidos: cliente.pedidos,
+        valor: cliente.valor,
+        // Usar data do primeiro pedido se não houver created_at no cliente
+        created_at: clienteDetalhado.created_at || primeiroPedido?.created_at
+      }
+    }
+    
+    console.log('Cliente selecionado final:', clienteSelecionado.value)
+    isModalClienteOpen.value = true
+  } catch (err) {
+    console.error('Erro ao abrir detalhes do cliente:', err)
+    showToast('Erro ao carregar detalhes do cliente', 'error')
+  }
+}
+
+const fecharDetalhesCliente = () => {
+  isModalClienteOpen.value = false
+  clienteSelecionado.value = null
+}
+
+// Funções do modal de pedido
+const pedidoSelecionado = ref<any>(null)
+const isModalPedidoOpen = ref(false)
+
+const abrirDetalhesPedido = (pedido: any) => {
+  console.log('Abrindo detalhes do pedido:', pedido)
+  
+  // Transformar dados da tabela de pedidos para o formato do PedidoModal
+  let items = []
+  
+  try {
+    // O campo 'pedido' contém texto simples, não JSON
+    // Formato: "2x Pizza Margherita - R$ 52,64, 1x Coca Cola - R$ 8,00"
+    const pedidoText = pedido.pedido || ''
+    
+    if (pedidoText) {
+      // Parse suporta quebras de linha OU vírgula seguida de "Nx "
+      const itemsTexto = pedidoText
+        .split(/\n|,\s+(?=\d+x\s)/)
+        .map((item: string) => item.trim())
+        .filter((item: string) => item.length > 0)
+      
+      itemsTexto.forEach((itemTexto: string) => {
+        // Regex para capturar: quantidade, nome e preço
+        const matchComPreco = itemTexto.match(/^(\d+)x\s+(.+?)\s+-\s+R\$\s+([\d,\.]+)$/)
+        
+        if (matchComPreco && matchComPreco[1] && matchComPreco[2] && matchComPreco[3]) {
+          const quantidade = parseInt(matchComPreco[1])
+          const nome = matchComPreco[2].trim()
+          const precoStr = matchComPreco[3].replace(',', '.')
+          const precoTotal = parseFloat(precoStr)
+          
+          items.push({
+            nome,
+            quantidade,
+            preco: precoTotal / quantidade,
+            observacao: undefined
+          })
+        } else {
+          // Tenta match sem preço: "2x Pizza Margherita"
+          const matchSemPreco = itemTexto.match(/^(\d+)x\s+(.+)$/)
+          
+          if (matchSemPreco && matchSemPreco[1] && matchSemPreco[2]) {
+            const quantidade = parseInt(matchSemPreco[1])
+            const nome = matchSemPreco[2].trim()
+            const valorSemEntrega = parseFloat(pedido.valor_total || 0) - parseFloat(pedido.valor_entrega || 0)
+            const precoEstimado = valorSemEntrega / itemsTexto.length
+            
+            items.push({
+              nome,
+              quantidade,
+              preco: precoEstimado / quantidade,
+              observacao: undefined
+            })
+          }
+        }
+      })
+    }
+    
+    console.log('Items parseados:', items)
+  } catch (e) {
+    console.error('Erro ao fazer parse dos itens do pedido:', e)
+    items = []
+  }
+  
+  // Transformar para o formato esperado pelo modal
+  const pedidoFormatado = {
+    id: pedido.id,
+    numero: pedido.numero_pedido,
+    cliente: pedido.nome_cliente,
+    telefone: pedido.telefone_cliente || 'Não informado',
+    endereco: pedido.endereco_entrega,
+    items: items,
+    total: parseFloat(pedido.valor_total || 0),
+    formaPagamento: pedido.forma_pagamento,
+    tipoEntrega: pedido.tipo_retirada,
+    status: 'concluido', // Pedidos do relatório são considerados concluídos
+    observacao: pedido.observacao,
+    troco: pedido.troco ? parseFloat(pedido.troco) : undefined,
+    dataHora: new Date(pedido.created_at),
+    valorEntrega: pedido.valor_entrega ? parseFloat(pedido.valor_entrega) : undefined
+  }
+  
+  console.log('Pedido formatado:', pedidoFormatado)
+  pedidoSelecionado.value = pedidoFormatado
+  isModalPedidoOpen.value = true
+}
+
+const fecharDetalhesPedido = () => {
+  isModalPedidoOpen.value = false
+  pedidoSelecionado.value = null
 }
 
 // Lifecycle

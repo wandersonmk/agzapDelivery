@@ -62,6 +62,7 @@ const formatarValor = (valor: number) => {
 // Composables para exportação
 const { exportarClientesPDF } = usePDFExport()
 const { exportarClientesExcel } = useExcelExport()
+const { buscarConfiguracoes } = useEmpresa()
 
 // Estado para controle do loading das exportações
 const exportandoPDF = ref(false)
@@ -72,11 +73,13 @@ const exportarPDF = async () => {
   try {
     exportandoPDF.value = true
     
+    const configEmpresa = await buscarConfiguracoes()
+    
     const dadosParaExportar = (filtroNome.value || filtroTelefone.value) 
       ? clientesFiltrados.value 
       : null
 
-    const resultado = await exportarClientesPDF(clientesData.value, dadosParaExportar)
+    const resultado = await exportarClientesPDF(clientesData.value, dadosParaExportar, configEmpresa)
     
     if (resultado.success) {
       console.info(`✅ PDF exportado com sucesso! Arquivo: ${resultado.filename} | Clientes: ${resultado.totalClientes}`)

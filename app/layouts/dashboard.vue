@@ -78,7 +78,7 @@ const route = useRoute()
 const pageTitle = computed(() => {
   switch (route.path) {
     case '/':
-      return 'Dashboard'
+      return 'Configurações'
     case '/pedidos':
       return 'Pedidos'
     case '/cardapio':
@@ -89,6 +89,8 @@ const pageTitle = computed(() => {
       return 'Relatórios'
     case '/cupons':
       return 'Cupons de Desconto'
+    case '/configuracoes':
+      return 'Configurações'
     default:
       return 'Dashboard'
   }
@@ -97,7 +99,7 @@ const pageTitle = computed(() => {
 const pageDescription = computed(() => {
   switch (route.path) {
     case '/':
-      return 'Visão geral do sistema'
+      return 'Configure as definições do sistema e seu delivery'
     case '/pedidos':
       return 'Gerencie todos os pedidos e vendas'
     case '/cardapio':
@@ -108,6 +110,8 @@ const pageDescription = computed(() => {
       return 'Análise e controle de pedidos'
     case '/cupons':
       return 'Crie e gerencie cupons promocionais'
+    case '/configuracoes':
+      return 'Configure as definições do sistema e seu delivery'
     default:
       return 'Visão geral do sistema'
   }
