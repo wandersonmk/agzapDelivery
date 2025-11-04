@@ -59,8 +59,8 @@ export const usePedidos = () => {
   const error = ref<string | null>(null)
   const pedidosDestacados = ref<Set<string>>(new Set()) // IDs dos pedidos recém-chegados
 
-  // ID da empresa (por enquanto usando um ID fixo, depois integrar com useEmpresa)
-  const empresaId = '75bd85cf-1997-48e2-9367-e554b01a2283'
+  // Obter empresa do usuário logado
+  const { getEmpresaId } = useEmpresa()
   
   // Rastrear pedidos anteriores para detectar novos
   let previousPedidosCount = 0
@@ -171,6 +171,8 @@ export const usePedidos = () => {
 
   // Buscar pedidos do kanban (filtro inteligente baseado em status)
   const fetchPedidos = async () => {
+    const empresaId = await getEmpresaId()
+    
     if (!empresaId) {
       error.value = 'Empresa não encontrada'
       return
@@ -317,6 +319,8 @@ export const usePedidos = () => {
 
   // Criar novo pedido
   const createPedido = async (novoPedido: Omit<PedidoSupabase, 'id' | 'numero_pedido' | 'created_at'>) => {
+    const empresaId = await getEmpresaId()
+    
     if (!empresaId) {
       error.value = 'Empresa não encontrada'
       return null
@@ -394,23 +398,24 @@ export const usePedidos = () => {
   }
 
   const setupRealtimeSubscription = () => {
-    if (!empresaId) {
-      console.log('[Real-time] Empresa ID não encontrado')
-      return
-    }
+    getEmpresaId().then(empresaId => {
+      if (!empresaId) {
+        console.log('[Real-time] Empresa ID não encontrado')
+        return
+      }
 
-    console.log('[Real-time] Tentando configurar Supabase Realtime...')
+      console.log('[Real-time] Tentando configurar Supabase Realtime...')
 
-    const subscription = supabase
-      .channel('pedidos_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'pedidos',
-          filter: `empresa_id=eq.${empresaId}`
-        },
+      const subscription = supabase
+        .channel('pedidos_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'pedidos',
+            filter: `empresa_id=eq.${empresaId}`
+          },
         (payload) => {
           console.log('✅ [Real-time] Atualização recebida:', payload.eventType, payload)
           
@@ -447,17 +452,20 @@ export const usePedidos = () => {
         }
       })
 
-    // Iniciar polling por padrão após 3 segundos se não houver resposta do Realtime
-    setTimeout(() => {
-      console.log('[Real-time] Iniciando polling como fallback...')
-      startPolling(30000) // 30 segundos
-    }, 3000)
+      // Iniciar polling por padrão após 3 segundos se não houver resposta do Realtime
+      setTimeout(() => {
+        console.log('[Real-time] Iniciando polling como fallback...')
+        startPolling(30000) // 30 segundos
+      }, 3000)
 
-    return subscription
+      return subscription
+    }) // Fechar o .then()
   }
 
   // Buscar todos os pedidos (sem filtro de data) - para relatórios
   const fetchAllPedidos = async () => {
+    const empresaId = await getEmpresaId()
+    
     if (!empresaId) {
       error.value = 'Empresa não encontrada'
       return []

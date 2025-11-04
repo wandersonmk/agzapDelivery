@@ -86,7 +86,7 @@ export function useAuth() {
   }
 
   // Registro
-  const signUp = async (email: string, password: string, nome: string) => {
+  const signUp = async (email: string, password: string, nome: string, nomeEmpresa: string) => {
     const client = getSupabase()
     if (!client) throw new Error('Supabase não disponível')
     
@@ -100,7 +100,10 @@ export function useAuth() {
         email,
         password,
         options: {
-          data: { nome }
+          data: { 
+            nome,
+            nome_empresa: nomeEmpresa
+          }
         }
       })
 

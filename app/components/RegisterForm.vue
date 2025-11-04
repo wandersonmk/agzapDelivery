@@ -72,8 +72,8 @@ async function handleRegister() {
   }
   
   try {
-    // Chamar signUp com parâmetros corretos (email, password, nome)
-    await signUp(email.value, password.value, name.value)
+    // Chamar signUp com parâmetros corretos (email, password, nome, nomeEmpresa)
+    await signUp(email.value, password.value, name.value, companyName.value)
     
     // Sucesso: mostrar modal de confirmação de email
     showEmailModal.value = true

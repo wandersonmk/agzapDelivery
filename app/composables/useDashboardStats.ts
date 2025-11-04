@@ -43,10 +43,12 @@ export const useDashboardStats = () => {
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
-  // ID da empresa (mesma lógica do usePedidos)
-  const empresaId = '75bd85cf-1997-48e2-9367-e554b01a2283'
+  // Obter empresa do usuário logado
+  const { getEmpresaId } = useEmpresa()
 
   const fetchStats = async () => {
+    const empresaId = await getEmpresaId()
+    
     if (!empresaId) {
       error.value = 'Empresa não encontrada'
       return
