@@ -1,6 +1,6 @@
-# 🍕 Pizza Vilha - Sistema de Gestão de Pizzaria
+# 🚀 Agzap Delivery - Sistema de Delivery
 
-Sistema completo de gestão para pizzarias desenvolvido com Nuxt 4, TypeScript e Supabase.
+Sistema completo de gestão para delivery desenvolvido com Nuxt 4, TypeScript e Supabase.
 
 ## 🚀 Funcionalidades
 

@@ -175,6 +175,6 @@ definePageMeta({
 })
 
 useHead({
-  title: 'Ajuda - Sistema de Gestão'
+  title: 'Ajuda - Sistema de Delivery'
 })
 </script>

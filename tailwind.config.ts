@@ -4,6 +4,12 @@ const config: Partial<Config> = {
   darkMode: 'class',
   theme: {
     extend: {
+      borderRadius: {
+        'lg': '8px',
+        'md': '8px',
+        'xl': '12px',
+        '2xl': '16px'
+      },
       colors: {
         // Core semantic tokens using CSS variables
         background: 'rgb(var(--background) / <alpha-value>)',

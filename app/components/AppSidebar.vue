@@ -17,7 +17,7 @@
           <h1 class="text-lg font-bold truncate">
             {{ nomeEmpresa || 'Carregando...' }}
           </h1>
-          <p class="text-xs text-muted-foreground">Sistema de Gestão</p>
+          <p class="text-xs text-muted-foreground">Sistema de Delivery</p>
         </div>
       </div>
 
@@ -27,8 +27,8 @@
           <li v-for="item in menuItems" :key="item.to">
             <NuxtLink 
               :to="item.to"
-              class="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-muted group relative"
-              :class="$route.path === item.to ? 'bg-primary text-primary-foreground' : 'text-foreground/80 hover:text-foreground'"
+              class="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-primary/10 group relative"
+              :class="$route.path === item.to ? 'bg-primary text-primary-foreground' : 'text-foreground/70 hover:text-primary'"
             >
               <font-awesome-icon 
                 :icon="item.icon" 
@@ -91,7 +91,7 @@
           <h1 class="text-lg font-bold truncate">
             {{ nomeEmpresa || 'Carregando...' }}
           </h1>
-          <p class="text-xs text-muted-foreground">Sistema de Gestão</p>
+          <p class="text-xs text-muted-foreground">Sistema de Delivery</p>
         </div>
         
         <!-- Botão fechar -->
@@ -112,8 +112,8 @@
             <NuxtLink 
               :to="item.to"
               @click="$emit('close-mobile')"
-              class="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-muted group relative"
-              :class="$route.path === item.to ? 'bg-primary text-primary-foreground' : 'text-foreground/80 hover:text-foreground'"
+              class="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-primary/10 group relative"
+              :class="$route.path === item.to ? 'bg-primary text-primary-foreground' : 'text-foreground/70 hover:text-primary'"
             >
               <font-awesome-icon 
                 :icon="item.icon" 

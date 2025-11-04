@@ -41,12 +41,12 @@ export const usePDFExport = () => {
       doc.setTextColor(255, 255, 255)
       doc.setFontSize(24)
       doc.setFont('helvetica', 'bold')
-      doc.text('PizzaVilha', margin, 25)
+      doc.text('Agzap Delivery', margin, 25)
       
       // Subtítulo
       doc.setFontSize(14)
       doc.setFont('helvetica', 'normal')
-      doc.text('Gestão de Pedidos', margin, 35)
+      doc.text('Sistema de Delivery', margin, 35)
       
       // Data/hora da exportação
       doc.setFontSize(10)
@@ -172,12 +172,11 @@ export const usePDFExport = () => {
       
       console.log('Todos os clientes foram adicionados ao PDF')
       
-      // Footer simples
-      const footerY = pageHeight - 20
+      // Footer com informações da empresa
+      const footerY = doc.internal.pageSize.height - 10
       doc.setFontSize(8)
-      doc.setTextColor(100, 100, 100)
-      doc.text('© 2025 PizzaVilha - Sistema de Gestão de Pedidos', margin, footerY)
-      doc.text(`${dadosParaExportar.length} clientes exportados`, pageWidth - margin - 80, footerY)
+      doc.setTextColor(100)
+      doc.text('© 2025 Agzap Delivery - Sistema de Delivery', margin, footerY)
       
       // Gerar nome do arquivo
       const timestamp = agora.toISOString().split('T')[0]

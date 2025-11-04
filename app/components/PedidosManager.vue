@@ -610,7 +610,7 @@ const printOrder = (pedido: Pedido) => {
       
       <div class="footer">
         <div>Obrigado pela preferência!</div>
-        <div>PizzaVilha</div>
+        <div>Agzap Delivery</div>
         <div>${formatDateTime(new Date())}</div>
       </div>
     </body>
