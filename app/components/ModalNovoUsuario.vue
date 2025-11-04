@@ -9,8 +9,12 @@ interface Props {
 const props = defineProps<Props>()
 const emit = defineEmits<{
   close: []
-  salvar: [data: any]
+  usuarioCriado: []
 }>()
+
+// Composables
+const { enviarConvite } = useUsuarios()
+const toast = await useToastSafe()
 
 // Estado do formulário
 const form = ref({
@@ -18,6 +22,9 @@ const form = ref({
   papel: 'atendente' as PapelUsuario,
   permissoesPersonalizadas: false
 })
+
+const salvando = ref(false)
+const erro = ref('')
 
 // Resetar formulário ao abrir/fechar
 watch(() => props.isOpen, (isOpen) => {
@@ -27,6 +34,8 @@ watch(() => props.isOpen, (isOpen) => {
       papel: 'atendente',
       permissoesPersonalizadas: false
     }
+    erro.value = ''
+    salvando.value = false
   }
 })
 
@@ -56,11 +65,51 @@ const permissoesPapel = computed(() => {
   return PERMISSOES_PADRAO[form.value.papel]
 })
 
-const salvar = () => {
-  console.log('Salvar novo usuário:', form.value)
-  // Aqui virá a lógica de banco de dados
-  emit('salvar', form.value)
-  emit('close')
+const salvar = async () => {
+  // Validação
+  if (!form.value.email || !form.value.email.includes('@')) {
+    erro.value = 'Por favor, informe um email válido'
+    return
+  }
+
+  erro.value = ''
+  salvando.value = true
+
+  try {
+    console.log('[ModalNovoUsuario] Enviando convite com dados:', {
+      email: form.value.email,
+      papel: form.value.papel,
+      permissoes: permissoesPapel.value
+    })
+
+    // Enviar convite com permissões configuradas
+    const resultado = await enviarConvite({
+      email: form.value.email,
+      papel: form.value.papel,
+      permissoes: permissoesPapel.value
+    })
+
+    if (resultado.success) {
+      if (toast) {
+        toast.success(`Convite enviado para ${form.value.email}!`)
+      }
+      emit('usuarioCriado')
+      emit('close')
+    } else {
+      erro.value = resultado.message
+      if (toast) {
+        toast.error(resultado.message)
+      }
+    }
+  } catch (error: any) {
+    console.error('[ModalNovoUsuario] Erro ao enviar convite:', error)
+    erro.value = error.message || 'Erro ao enviar convite'
+    if (toast) {
+      toast.error('Erro ao enviar convite')
+    }
+  } finally {
+    salvando.value = false
+  }
 }
 </script>
 
@@ -90,16 +139,28 @@ const salvar = () => {
 
         <!-- Body -->
         <div class="p-6 space-y-6">
+          <!-- Erro -->
+          <div v-if="erro" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+            <div class="flex gap-3">
+              <font-awesome-icon icon="exclamation-circle" class="text-red-600 dark:text-red-400 mt-0.5" />
+              <div class="text-sm text-red-900 dark:text-red-100">
+                <p class="font-medium">Erro ao enviar convite</p>
+                <p class="text-xs text-red-700 dark:text-red-300 mt-1">{{ erro }}</p>
+              </div>
+            </div>
+          </div>
+
           <!-- Email -->
           <div>
             <label class="block text-sm font-medium text-foreground mb-2">
-              Email do Usuário
+              Email do Usuário <span class="text-red-500">*</span>
             </label>
             <input
               v-model="form.email"
               type="email"
               placeholder="usuario@exemplo.com"
               class="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+              :disabled="salvando"
               required
             />
             <p class="text-xs text-muted-foreground mt-1">
@@ -110,11 +171,12 @@ const salvar = () => {
           <!-- Papel -->
           <div>
             <label class="block text-sm font-medium text-foreground mb-2">
-              Papel do Usuário
+              Papel do Usuário <span class="text-red-500">*</span>
             </label>
             <select
               v-model="form.papel"
               class="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+              :disabled="salvando"
             >
               <option
                 v-for="papel in papeisDisponiveis"
@@ -250,12 +312,20 @@ const salvar = () => {
           <AppButton
             variant="outline"
             @click="$emit('close')"
+            :disabled="salvando"
           >
             Cancelar
           </AppButton>
-          <AppButton @click="salvar">
-            <font-awesome-icon icon="paper-plane" class="mr-2" />
-            Enviar Convite
+          <AppButton 
+            @click="salvar"
+            :disabled="salvando || !form.email"
+          >
+            <font-awesome-icon 
+              :icon="salvando ? 'spinner' : 'paper-plane'" 
+              :class="{ 'animate-spin': salvando }"
+              class="mr-2" 
+            />
+            {{ salvando ? 'Enviando...' : 'Enviar Convite' }}
           </AppButton>
         </div>
       </div>

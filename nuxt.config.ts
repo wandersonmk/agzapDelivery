@@ -15,6 +15,10 @@ export default defineNuxtConfig({
   },
   css: ['@fortawesome/fontawesome-svg-core/styles.css'],
   runtimeConfig: {
+    // Private keys (apenas servidor - NUNCA enviadas ao cliente)
+    supabaseServiceRoleKey: process.env.NUXT_SUPABASE_SERVICE_ROLE_KEY,
+    
+    // Public keys (enviadas ao cliente)
     public: {
       supabaseUrl:
         process.env.NUXT_PUBLIC_SUPABASE_URL ||

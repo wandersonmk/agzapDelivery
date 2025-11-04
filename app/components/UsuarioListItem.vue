@@ -23,6 +23,22 @@ const emit = defineEmits<{
 
 // Menu de ações aberto
 const menuAberto = ref(false)
+const menuRef = ref<HTMLElement | null>(null)
+
+// Fechar menu ao clicar fora
+const fecharMenu = (event: MouseEvent) => {
+  if (menuRef.value && !menuRef.value.contains(event.target as Node)) {
+    menuAberto.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', fecharMenu)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', fecharMenu)
+})
 
 // Função para formatar data
 const formatarData = (data: Date) => {
@@ -136,7 +152,7 @@ const papelIcon = computed(() => {
           <!-- Dropdown menu -->
           <div
             v-if="menuAberto"
-            v-click-outside="() => menuAberto = false"
+            ref="menuRef"
             class="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-10 py-1"
           >
             <button

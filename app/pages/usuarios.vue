@@ -4,30 +4,68 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+// Estados de carregamento
+const carregando = ref(false)
+const usuarios = ref<any[]>([])
+
+// Composables - usar refs para inicialização no onMounted
+const buscarUsuariosEmpresa = ref<any>(null)
+const toggleStatusUsuario = ref<any>(null)
+const removerUsuario = ref<any>(null)
+const toastSuccess = ref<any>(null)
+const toastError = ref<any>(null)
+
 // Estado para modal de novo usuário
 const isModalNovoUsuarioOpen = ref(false)
 const isModalEditarUsuarioOpen = ref(false)
 const selectedUsuario = ref<any>(null)
 
-// Dados mockados temporários para visualização
-const usuarios = ref([
-  {
-    id: '1',
-    nome: 'Wanderson',
-    email: 'wandersoncnm@gmail.com',
-    papel: 'proprietario',
-    ativo: true,
-    vinculadoEm: new Date('2025-11-04')
-  },
-  {
-    id: '2',
-    nome: 'Edjane',
-    email: 'instrutormk@gmail.com',
-    papel: 'atendente',
-    ativo: true,
-    vinculadoEm: new Date('2025-11-04')
+// Buscar usuários ao montar o componente (apenas no cliente)
+onMounted(async () => {
+  // Inicializar composables no cliente
+  const usuariosComposable = useUsuarios()
+  buscarUsuariosEmpresa.value = usuariosComposable.buscarUsuariosEmpresa
+  toggleStatusUsuario.value = usuariosComposable.toggleStatusUsuario
+  removerUsuario.value = usuariosComposable.removerUsuario
+  
+  const toast = useToastSafe()
+  toastSuccess.value = toast.success
+  toastError.value = toast.error
+  
+  // Carregar usuários
+  await carregarUsuarios()
+})
+
+// Função para carregar usuários
+const carregarUsuarios = async () => {
+  if (!buscarUsuariosEmpresa.value) return
+  
+  carregando.value = true
+  try {
+    const dados = await buscarUsuariosEmpresa.value()
+    
+    // Mapear dados para formato usado no componente
+    usuarios.value = dados.map((vinculo: any) => ({
+      id: vinculo.id, // ID do vínculo
+      usuarioId: vinculo.usuarios?.id,
+      nome: vinculo.usuarios?.nome || 'Usuário Pendente',
+      email: vinculo.usuarios?.email || 'Email não disponível',
+      foto: vinculo.usuarios?.foto,
+      papel: vinculo.papel,
+      ativo: vinculo.ativo,
+      vinculadoEm: new Date(vinculo.created_at)
+    }))
+    
+    console.log('[usuarios.vue] Usuários carregados:', usuarios.value)
+  } catch (error) {
+    console.error('[usuarios.vue] Erro ao carregar usuários:', error)
+    if (toastError.value) {
+      toastError.value('Erro ao carregar usuários')
+    }
+  } finally {
+    carregando.value = false
   }
-])
+}
 
 // Filtros e busca
 const searchQuery = ref('')
@@ -78,14 +116,51 @@ const fecharModais = () => {
   selectedUsuario.value = null
 }
 
-const toggleStatus = (usuario: any) => {
-  console.log('Toggle status:', usuario)
-  // Aqui virá a lógica de banco de dados
+const onUsuarioCriado = async () => {
+  // Recarregar lista de usuários
+  await carregarUsuarios()
+  if (toastSuccess.value) {
+    toastSuccess.value('Usuário adicionado com sucesso!')
+  }
 }
 
-const excluirUsuario = (usuario: any) => {
-  console.log('Excluir usuário:', usuario)
-  // Aqui virá a lógica de banco de dados
+const toggleStatus = async (usuario: any) => {
+  if (!toggleStatusUsuario.value) return
+  
+  const novoStatus = !usuario.ativo
+  const resultado = await toggleStatusUsuario.value(usuario.id, novoStatus)
+  
+  if (resultado.success) {
+    await carregarUsuarios()
+    if (toastSuccess.value) {
+      toastSuccess.value(novoStatus ? 'Usuário ativado' : 'Usuário desativado')
+    }
+  } else {
+    if (toastError.value) {
+      toastError.value('Erro ao alterar status do usuário')
+    }
+  }
+}
+
+const excluirUsuario = async (usuario: any) => {
+  if (!removerUsuario.value) return
+  
+  if (!confirm(`Tem certeza que deseja remover ${usuario.nome} da empresa?`)) {
+    return
+  }
+  
+  const resultado = await removerUsuario.value(usuario.id)
+  
+  if (resultado.success) {
+    await carregarUsuarios()
+    if (toastSuccess.value) {
+      toastSuccess.value('Usuário removido com sucesso')
+    }
+  } else {
+    if (toastError.value) {
+      toastError.value('Erro ao remover usuário')
+    }
+  }
 }
 </script>
 
@@ -153,7 +228,12 @@ const excluirUsuario = (usuario: any) => {
       </div>
 
       <!-- Lista de usuários -->
-      <div class="divide-y divide-border">
+      <div v-if="carregando" class="p-12 text-center">
+        <CircularProgress />
+        <p class="text-muted-foreground mt-4">Carregando usuários...</p>
+      </div>
+
+      <div v-else class="divide-y divide-border">
         <UsuarioListItem
           v-for="usuario in usuariosFiltrados"
           :key="usuario.id"
@@ -180,6 +260,7 @@ const excluirUsuario = (usuario: any) => {
     <ModalNovoUsuario
       :isOpen="isModalNovoUsuarioOpen"
       @close="fecharModais"
+      @usuario-criado="onUsuarioCriado"
     />
 
     <ModalEditarUsuario
