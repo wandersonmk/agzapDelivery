@@ -7,12 +7,12 @@
       <!-- Header Ultra Compacto -->
       <div class="flex items-center justify-between px-3 py-2 border-b border-border bg-muted/30">
         <div>
-          <h2 class="text-base font-bold text-foreground">Pedido #{{ pedido?.numero }}</h2>
-          <p class="text-[10px] text-muted-foreground">{{ pedido?.dataHora.toLocaleString('pt-BR') }}</p>
+          <h2 class="text-lg font-bold text-foreground">Pedido #{{ pedido?.numero }}</h2>
+          <p class="text-xs text-muted-foreground">{{ pedido?.dataHora.toLocaleString('pt-BR') }}</p>
         </div>
         <div class="flex items-center gap-1.5">
           <span :class="[
-            'px-1.5 py-0.5 text-[10px] font-medium rounded-full',
+            'px-2 py-0.5 text-xs font-medium rounded-full',
             getStatusColor(pedido?.status || '')
           ]">
             {{ getStatusLabel(pedido?.status || '') }}
@@ -21,7 +21,7 @@
             @click="$emit('close')"
             class="p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
           >
-            <font-awesome-icon icon="times" class="w-3.5 h-3.5" />
+            <font-awesome-icon icon="times" class="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -31,44 +31,44 @@
         <div class="p-3 space-y-2">
           <!-- Informações do Cliente -->
           <div class="bg-muted/30 rounded p-2">
-            <h3 class="font-semibold text-xs text-foreground mb-1.5">Informações do Cliente</h3>
-            <div class="grid grid-cols-2 gap-1.5 text-xs">
+            <h3 class="font-semibold text-sm text-foreground mb-1.5">Informações do Cliente</h3>
+            <div class="grid grid-cols-2 gap-1.5 text-sm">
               <div>
-                <label class="text-[10px] font-medium text-muted-foreground">Nome</label>
+                <label class="text-xs font-medium text-muted-foreground">Nome</label>
                 <p class="text-foreground leading-tight">{{ pedido?.cliente }}</p>
               </div>
               <div>
-                <label class="text-[10px] font-medium text-muted-foreground">Telefone</label>
+                <label class="text-xs font-medium text-muted-foreground">Telefone</label>
                 <p class="text-foreground leading-tight">{{ pedido?.telefone }}</p>
               </div>
               <div v-if="pedido?.endereco" class="col-span-2">
-                <label class="text-[10px] font-medium text-muted-foreground">Endereço</label>
-                <p class="text-foreground text-xs leading-tight">{{ pedido?.endereco }}</p>
+                <label class="text-xs font-medium text-muted-foreground">Endereço</label>
+                <p class="text-foreground text-sm leading-tight">{{ pedido?.endereco }}</p>
               </div>
             </div>
           </div>
 
           <!-- Itens do Pedido -->
           <div>
-            <h3 class="font-semibold text-xs text-foreground mb-1.5">Itens do Pedido</h3>
-            <div v-if="!pedido?.items || pedido.items.length === 0" class="text-xs text-muted-foreground italic p-1.5 bg-muted/30 rounded">
+            <h3 class="font-semibold text-sm text-foreground mb-1.5">Itens do Pedido</h3>
+            <div v-if="!pedido?.items || pedido.items.length === 0" class="text-sm text-muted-foreground italic p-1.5 bg-muted/30 rounded">
               Nenhum item encontrado
             </div>
             <div v-else class="space-y-1.5">
               <div
                 v-for="(item, index) in pedido?.items"
                 :key="index"
-                class="flex items-start justify-between p-1.5 bg-muted/30 rounded text-xs"
+                class="flex items-start justify-between p-2 bg-muted/30 rounded text-sm"
               >
                 <div class="flex-1">
                   <p class="font-medium text-foreground leading-tight">{{ item.quantidade }}x {{ item.nome }}</p>
-                  <p v-if="item.observacao" class="text-[10px] text-muted-foreground mt-0.5">
+                  <p v-if="item.observacao" class="text-xs text-muted-foreground mt-0.5">
                     Obs: {{ item.observacao }}
                   </p>
                 </div>
                 <div class="text-right ml-2">
-                  <p class="text-muted-foreground text-[10px]">R$ {{ item.preco.toFixed(2) }} un</p>
-                  <p class="font-semibold text-foreground text-xs">R$ {{ (item.quantidade * item.preco).toFixed(2) }}</p>
+                  <p class="text-muted-foreground text-xs">R$ {{ item.preco.toFixed(2) }} un</p>
+                  <p class="font-semibold text-foreground text-sm">R$ {{ (item.quantidade * item.preco).toFixed(2) }}</p>
                 </div>
               </div>
             </div>
@@ -76,8 +76,8 @@
 
           <!-- Resumo Financeiro -->
           <div class="bg-muted/30 rounded p-2">
-            <h3 class="font-semibold text-xs text-foreground mb-1.5">Resumo Financeiro</h3>
-            <div class="space-y-0.5 text-xs">
+            <h3 class="font-semibold text-sm text-foreground mb-1.5">Resumo Financeiro</h3>
+            <div class="space-y-0.5 text-sm">
               <div class="flex justify-between">
                 <span class="text-muted-foreground">Subtotal</span>
                 <span class="text-foreground">R$ {{ (pedido?.total - (pedido?.valorEntrega || 0)).toFixed(2) }}</span>
@@ -94,20 +94,20 @@
           </div>
 
           <!-- Detalhes de Pagamento e Entrega -->
-          <div class="grid grid-cols-2 gap-1.5 text-xs">
-            <div class="bg-muted/30 rounded p-1.5">
-              <label class="text-[10px] font-medium text-muted-foreground block mb-0.5">Pagamento</label>
+          <div class="grid grid-cols-2 gap-1.5 text-sm">
+            <div class="bg-muted/30 rounded p-2">
+              <label class="text-xs font-medium text-muted-foreground block mb-0.5">Pagamento</label>
               <span :class="[
-                'inline-block px-1.5 py-0.5 text-[10px] font-medium rounded',
+                'inline-block px-2 py-0.5 text-xs font-medium rounded',
                 getPaymentColor(pedido?.formaPagamento || '')
               ]">
                 {{ getPaymentLabel(pedido?.formaPagamento || '') }}
               </span>
             </div>
-            <div class="bg-muted/30 rounded p-1.5">
-              <label class="text-[10px] font-medium text-muted-foreground block mb-0.5">Tipo</label>
+            <div class="bg-muted/30 rounded p-2">
+              <label class="text-xs font-medium text-muted-foreground block mb-0.5">Tipo</label>
               <span :class="[
-                'inline-block px-1.5 py-0.5 text-[10px] font-medium rounded',
+                'inline-block px-2 py-0.5 text-xs font-medium rounded',
                 pedido?.tipoEntrega === 'entrega' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
               ]">
                 {{ pedido?.tipoEntrega === 'entrega' ? 'Entrega' : 'Retirada' }}
@@ -116,29 +116,29 @@
           </div>
 
           <!-- Troco -->
-          <div v-if="pedido?.troco" class="bg-muted/30 rounded p-1.5 text-xs">
+          <div v-if="pedido?.troco" class="bg-muted/30 rounded p-2 text-sm">
             <div class="flex justify-between mb-0.5">
-              <span class="text-muted-foreground text-[10px]">Troco para:</span>
+              <span class="text-muted-foreground text-xs">Troco para:</span>
               <span class="text-foreground">R$ {{ Number(pedido.troco).toFixed(2) }}</span>
             </div>
             <div v-if="Number(pedido.troco) > Number(pedido.total)" class="flex justify-between font-medium">
-              <span class="text-foreground text-[10px]">Levar de troco:</span>
-              <span class="text-green-600 text-xs">R$ {{ (Number(pedido.troco) - Number(pedido.total)).toFixed(2) }}</span>
+              <span class="text-foreground text-xs">Levar de troco:</span>
+              <span class="text-green-600 text-sm">R$ {{ (Number(pedido.troco) - Number(pedido.total)).toFixed(2) }}</span>
             </div>
-            <div v-else class="text-[10px] text-blue-600 font-medium">
+            <div v-else class="text-xs text-blue-600 font-medium">
               ℹ️ Não precisa de troco
             </div>
           </div>
 
           <!-- Tempo Estimado -->
-          <div v-if="pedido?.tempoEstimado" class="text-[10px] text-muted-foreground text-center py-0.5">
+          <div v-if="pedido?.tempoEstimado" class="text-xs text-muted-foreground text-center py-0.5">
             ⏱️ Tempo estimado: {{ pedido.tempoEstimado }} minutos
           </div>
 
           <!-- Observações -->
-          <div v-if="pedido?.observacao" class="bg-yellow-50 dark:bg-yellow-900/20 rounded p-1.5 border border-yellow-200 dark:border-yellow-800">
-            <h4 class="font-medium text-[10px] text-foreground mb-0.5">Observações</h4>
-            <p class="text-xs text-foreground leading-tight">{{ pedido.observacao }}</p>
+          <div v-if="pedido?.observacao" class="bg-yellow-50 dark:bg-yellow-900/20 rounded p-2 border border-yellow-200 dark:border-yellow-800">
+            <h4 class="font-medium text-xs text-foreground mb-0.5">Observações</h4>
+            <p class="text-sm text-foreground leading-tight">{{ pedido.observacao }}</p>
           </div>
         </div>
       </div>
@@ -150,7 +150,7 @@
           <template v-if="pedido?.status === 'novo'">
             <button
               @click="acceptPedido"
-              class="w-full bg-blue-600 hover:bg-blue-700 text-white px-2 py-1.5 rounded text-xs font-medium transition-colors"
+              class="w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors"
             >
               ✅ Aceitar Pedido
             </button>
@@ -159,9 +159,9 @@
           <template v-else-if="pedido?.status === 'cozinha'">
             <button
               @click="markPedidoAsReady"
-              class="w-full bg-orange-600 hover:bg-orange-700 text-white px-2 py-1.5 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1"
+              class="w-full bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1.5"
             >
-              <font-awesome-icon icon="utensils" class="w-2.5 h-2.5" />
+              <font-awesome-icon icon="utensils" class="w-4 h-4" />
               Marcar como Pronto
             </button>
           </template>
@@ -169,9 +169,9 @@
           <template v-else-if="pedido?.status === 'entrega'">
             <button
               @click="completePedido"
-              class="w-full bg-purple-600 hover:bg-purple-700 text-white px-2 py-1.5 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1"
+              class="w-full bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1.5"
             >
-              <font-awesome-icon icon="check-circle" class="w-2.5 h-2.5" />
+              <font-awesome-icon icon="check-circle" class="w-4 h-4" />
               Concluir Entrega
             </button>
           </template>
@@ -179,9 +179,9 @@
           <!-- Botão de imprimir centralizado -->
           <button
             @click="printPedido"
-            class="w-full bg-purple-600 hover:bg-purple-700 text-white px-2 py-1.5 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1"
+            class="w-full bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1.5"
           >
-            <font-awesome-icon icon="print" class="w-2.5 h-2.5" />
+            <font-awesome-icon icon="print" class="w-4 h-4" />
             Imprimir Pedido
           </button>
         </div>

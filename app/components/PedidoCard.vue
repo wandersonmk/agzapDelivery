@@ -4,6 +4,8 @@
       'bg-background border rounded-lg p-3 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer',
       props.isDestacado 
         ? 'border-orange-400 bg-orange-50 animate-pulse shadow-orange-200 shadow-lg' 
+        : pedido.status === 'cancelado'
+        ? 'border-red-300 bg-red-50 dark:bg-red-900/10'
         : 'border-border hover:border-primary/50'
     ]"
     @click="$emit('view', pedido)"
@@ -20,6 +22,15 @@
         </span>
       </div>
       <div class="flex items-center gap-1">
+        <!-- Botão de cancelar (apenas para status novo, cozinha e entrega) -->
+        <button
+          v-if="['novo', 'cozinha', 'entrega'].includes(pedido.status)"
+          @click.stop="$emit('cancel', pedido)"
+          class="p-1 rounded text-red-500 hover:text-red-700 hover:bg-red-100 transition-colors"
+          title="Cancelar pedido"
+        >
+          <font-awesome-icon icon="ban" class="w-3 h-3" />
+        </button>
         <button
           @click.stop="$emit('print', pedido)"
           class="p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
@@ -100,6 +111,19 @@
           Concluído
         </div>
       </template>
+
+      <template v-else-if="pedido.status === 'cancelado'">
+        <div class="flex-1 bg-red-100 text-red-700 px-2 py-1.5 rounded text-xs font-medium text-center">
+          <font-awesome-icon icon="ban" class="w-3 h-3 mr-1" />
+          Cancelado
+        </div>
+      </template>
+    </div>
+
+    <!-- Motivo do cancelamento (se cancelado) -->
+    <div v-if="pedido.status === 'cancelado' && pedido.motivoCancelamento" class="mt-2 p-1.5 bg-red-50 border-l-2 border-red-400 rounded text-xs">
+      <span class="font-medium text-red-800">Motivo:</span> 
+      <span class="text-red-700">{{ pedido.motivoCancelamento.length > 40 ? pedido.motivoCancelamento.substring(0, 40) + '...' : pedido.motivoCancelamento }}</span>
     </div>
 
     <!-- Observação importante se houver -->
@@ -128,11 +152,12 @@ interface Pedido {
   total: number
   formaPagamento: 'dinheiro' | 'cartao' | 'pix'
   tipoEntrega: 'retirada' | 'entrega'
-  status: 'novo' | 'cozinha' | 'entrega' | 'concluido'
+  status: 'novo' | 'cozinha' | 'entrega' | 'concluido' | 'cancelado'
   observacao?: string
   troco?: number
   dataHora: Date
   tempoEstimado?: number
+  motivoCancelamento?: string
 }
 
 // Props definidas no final do arquivo
@@ -143,6 +168,7 @@ defineEmits<{
   ready: [pedidoId: string]
   complete: [pedidoId: string]
   print: [pedido: Pedido]
+  cancel: [pedido: Pedido]
 }>()
 
 const getStatusLabel = (status: string) => {
@@ -150,7 +176,8 @@ const getStatusLabel = (status: string) => {
     novo: 'Novo',
     cozinha: 'Cozinha',
     entrega: 'Entrega',
-    concluido: 'Concluído'
+    concluido: 'Concluído',
+    cancelado: 'Cancelado'
   }
   return labels[status as keyof typeof labels] || status
 }
@@ -160,7 +187,8 @@ const getStatusColor = (status: string) => {
     novo: 'bg-blue-100 text-blue-700',
     cozinha: 'bg-orange-100 text-orange-700',
     entrega: 'bg-purple-100 text-purple-700',
-    concluido: 'bg-green-100 text-green-700'
+    concluido: 'bg-green-100 text-green-700',
+    cancelado: 'bg-red-100 text-red-700'
   }
   return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-700'
 }

@@ -20,7 +20,8 @@ interface PedidoSupabase {
   tipo_retirada: 'retirada' | 'entrega'
   troco?: string
   tempo_estimado?: number
-  status: 'novo' | 'cozinha' | 'entrega' | 'concluido'
+  status: 'novo' | 'cozinha' | 'entrega' | 'concluido' | 'cancelado'
+  motivo_cancelamento?: string
   created_at: string
   updated_at: string
 }
@@ -35,13 +36,14 @@ interface Pedido {
   total: number
   formaPagamento: 'dinheiro' | 'cartao' | 'pix'
   tipoEntrega: 'retirada' | 'entrega'
-  status: 'novo' | 'cozinha' | 'entrega' | 'concluido'
+  status: 'novo' | 'cozinha' | 'entrega' | 'concluido' | 'cancelado'
   observacao?: string
   troco?: number
   dataHora: Date
   updatedAt: Date
   tempoEstimado?: number
   valorEntrega?: number
+  motivoCancelamento?: string
 }
 
 export const usePedidos = () => {
@@ -165,7 +167,8 @@ export const usePedidos = () => {
       troco: pedidoSupabase.troco ? parseFloat(pedidoSupabase.troco) : undefined,
       dataHora: new Date(pedidoSupabase.created_at),
       updatedAt: new Date(pedidoSupabase.updated_at),
-      tempoEstimado: pedidoSupabase.tempo_estimado || 30 // Usa o valor do banco ou 30 minutos como padrão
+      tempoEstimado: pedidoSupabase.tempo_estimado || 30, // Usa o valor do banco ou 30 minutos como padrão
+      motivoCancelamento: pedidoSupabase.motivo_cancelamento || undefined
     }
   }
 
@@ -194,21 +197,21 @@ export const usePedidos = () => {
       }
 
       if (data) {
-        // Filtrar pedidos: mostrar não concluídos OU concluídos criados há menos de 5h
+        // Filtrar pedidos: mostrar não concluídos/cancelados OU concluídos/cancelados criados há menos de 5h
         const cincoHorasEmMs = 5 * 60 * 60 * 1000 // 5 horas em milissegundos
         const agora = new Date().getTime()
         
         const pedidosFiltrados = data.filter(p => {
-          if (p.status !== 'concluido') {
-            // Não concluído: sempre mostrar (independente do tempo)
+          if (p.status !== 'concluido' && p.status !== 'cancelado') {
+            // Não concluído nem cancelado: sempre mostrar (independente do tempo)
             return true
           } else {
-            // Concluído: mostrar apenas se CRIADO há menos de 5h
+            // Concluído ou Cancelado: mostrar apenas se CRIADO há menos de 5h
             const createdAt = new Date(p.created_at).getTime()
             const diferencaMs = agora - createdAt
             const horasAtras = diferencaMs / (60 * 60 * 1000)
             
-            console.log(`🔍 Pedido #${p.numero_pedido} concluído criado há ${horasAtras.toFixed(2)}h - ${horasAtras < 5 ? 'MOSTRAR ✅' : 'OCULTAR ❌'}`)
+            console.log(`🔍 Pedido #${p.numero_pedido} ${p.status} criado há ${horasAtras.toFixed(2)}h - ${horasAtras < 5 ? 'MOSTRAR ✅' : 'OCULTAR ❌'}`)
             
             return horasAtras < 5
           }
@@ -489,6 +492,42 @@ export const usePedidos = () => {
     }
   }
 
+  // Cancelar pedido
+  const cancelarPedido = async (pedidoId: string, motivo: string): Promise<boolean> => {
+    try {
+      console.log(`[usePedidos] Cancelando pedido ${pedidoId} com motivo: ${motivo}`)
+
+      const { error: supabaseError } = await supabase
+        .from('pedidos')
+        .update({ 
+          status: 'cancelado',
+          motivo_cancelamento: motivo,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', pedidoId)
+
+      if (supabaseError) {
+        console.error('[usePedidos] Erro ao cancelar pedido:', supabaseError)
+        return false
+      }
+
+      // Atualizar localmente
+      const pedido = pedidos.value.find(p => p.id === pedidoId)
+      if (pedido) {
+        pedido.status = 'cancelado'
+        pedido.motivoCancelamento = motivo
+        pedido.updatedAt = new Date()
+      }
+
+      console.log('[usePedidos] Pedido cancelado com sucesso')
+      return true
+
+    } catch (err) {
+      console.error('[usePedidos] Erro ao cancelar pedido:', err)
+      return false
+    }
+  }
+
   return {
     pedidos: readonly(pedidos),
     isLoading: readonly(isLoading),
@@ -496,6 +535,7 @@ export const usePedidos = () => {
     fetchPedidos, // Busca apenas pedidos de hoje (para o kanban)
     fetchAllPedidos, // Busca todos os pedidos (para relatórios)
     updatePedidoStatus,
+    cancelarPedido, // Nova função de cancelamento
     createPedido,
     getPedidosByStatus,
     getOrderCountByStatus,

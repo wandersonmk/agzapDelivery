@@ -107,6 +107,7 @@
             @view="viewOrder"
             @accept="acceptOrder"
             @print="printOrder"
+            @cancel="abrirModalCancelar"
           />
         </div>
       </div>
@@ -130,6 +131,7 @@
             @view="viewOrder"
             @ready="markAsReady"
             @print="printOrder"
+            @cancel="abrirModalCancelar"
           />
         </div>
       </div>
@@ -153,28 +155,30 @@
             @view="viewOrder"
             @complete="completeOrder"
             @print="printOrder"
+            @cancel="abrirModalCancelar"
           />
         </div>
       </div>
 
-      <!-- Coluna: Concluídos -->
+      <!-- Coluna: Concluídos/Cancelados -->
       <div class="bg-card border border-border rounded-lg">
         <div class="p-4 border-b border-border">
           <h3 class="font-semibold text-foreground flex items-center gap-2">
             <div class="w-3 h-3 bg-green-500 rounded-full"></div>
-            Concluídos
+            Concluídos/Cancelados
             <span class="ml-auto text-sm bg-green-100 text-green-700 px-2 py-1 rounded-full">
-              {{ getOrdersByStatus('concluido').length }}
+              {{ getOrdersByStatus('concluido').length + getOrdersByStatus('cancelado').length }}
             </span>
           </h3>
         </div>
         <div class="p-4 space-y-3 max-h-[600px] overflow-y-auto">
           <PedidoCard
-            v-for="pedido in getOrdersByStatus('concluido')"
+            v-for="pedido in [...getOrdersByStatus('concluido'), ...getOrdersByStatus('cancelado')]"
             :key="pedido.id"
             :pedido="pedido"
             @view="viewOrder"
             @print="printOrder"
+            @cancel="abrirModalCancelar"
           />
         </div>
       </div>
@@ -196,6 +200,15 @@
       @close="fecharModalNovoPedido"
       @pedido-criado="onPedidoCriado"
     />
+
+    <!-- Modal de Cancelamento -->
+    <ModalCancelarPedido
+      :isOpen="isModalCancelarOpen"
+      :pedidoId="pedidoParaCancelar?.id || ''"
+      :pedidoNumero="pedidoParaCancelar?.numero || 0"
+      @close="fecharModalCancelar"
+      @confirm="confirmarCancelamento"
+    />
     </div> <!-- Fecha div do content -->
   </div>
 </template>
@@ -210,6 +223,7 @@ const {
   error: pedidosError,
   fetchPedidos,
   updatePedidoStatus,
+  cancelarPedido,
   getPedidosByStatus,
   getOrderCountByStatus,
   setupRealtimeSubscription,
@@ -253,12 +267,13 @@ interface Pedido {
   total: number
   formaPagamento: 'dinheiro' | 'cartao' | 'pix'
   tipoEntrega: 'retirada' | 'entrega'
-  status: 'novo' | 'cozinha' | 'entrega' | 'concluido'
+  status: 'novo' | 'cozinha' | 'entrega' | 'concluido' | 'cancelado'
   observacao?: string
   troco?: number
   dataHora: Date
   tempoEstimado?: number
   valorEntrega?: number
+  motivoCancelamento?: string
 }
 
 // Estados
@@ -266,6 +281,8 @@ const activeFilter = ref<string>('todos')
 const isModalOpen = ref(false)
 const selectedPedido = ref<Pedido | null>(null)
 const isModalNovoPedidoOpen = ref(false)
+const isModalCancelarOpen = ref(false)
+const pedidoParaCancelar = ref<Pedido | null>(null)
 const searchQuery = ref('')
 
 // Filtros de status
@@ -352,6 +369,51 @@ const markAsReady = async (pedidoId: string) => {
 
 const completeOrder = async (pedidoId: string) => {
   await updateOrderStatus(pedidoId, 'concluido')
+}
+
+// Abrir modal de cancelamento
+const abrirModalCancelar = (pedido: Pedido) => {
+  pedidoParaCancelar.value = pedido
+  isModalCancelarOpen.value = true
+}
+
+// Fechar modal de cancelamento
+const fecharModalCancelar = () => {
+  isModalCancelarOpen.value = false
+  pedidoParaCancelar.value = null
+}
+
+// Confirmar cancelamento
+const confirmarCancelamento = async (motivo: string) => {
+  if (!pedidoParaCancelar.value) return
+
+  const pedidoId = pedidoParaCancelar.value.id
+  const pedidoNumero = pedidoParaCancelar.value.numero
+
+  console.log(`[PedidosManager] Cancelando pedido #${pedidoNumero} com motivo: ${motivo}`)
+
+  // Chamar função do composable
+  const success = await cancelarPedido(pedidoId, motivo)
+
+  if (success) {
+    // Mostrar notificação de sucesso
+    const toast = await useToastSafe()
+    if (toast) {
+      toast.success(`Pedido #${pedidoNumero} cancelado com sucesso!`)
+    }
+
+    // Fechar modal
+    fecharModalCancelar()
+
+    // Atualizar lista de pedidos
+    await fetchPedidos()
+  } else {
+    // Mostrar erro
+    const toast = await useToastSafe()
+    if (toast) {
+      toast.error(`Erro ao cancelar pedido #${pedidoNumero}. Tente novamente.`)
+    }
+  }
 }
 
 const updateOrderStatus = async (pedidoId: string, newStatus: string) => {
@@ -708,4 +770,5 @@ const onPedidoCriado = () => {
   fecharModalNovoPedido()
   fetchPedidos() // Atualiza lista
 }
+
 </script>
