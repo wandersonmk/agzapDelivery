@@ -20,6 +20,7 @@ const emit = defineEmits<{
   editar: [usuario: any]
   'toggle-status': [usuario: any]
   excluir: [usuario: any]
+  'copiar-link': [usuario: any]
 }>()
 
 // Menu de ações aberto
@@ -139,8 +140,20 @@ const papelIcon = computed(() => {
 
       <!-- Ações -->
       <div class="flex items-center gap-2 flex-shrink-0">
-        <!-- Botão Editar -->
+        <!-- Botão Copiar Link (apenas para pendentes) -->
         <button
+          v-if="usuario.isPendente"
+          @click="$emit('copiar-link', usuario)"
+          class="px-3 py-1.5 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors flex items-center gap-2"
+          title="Copiar link de convite"
+        >
+          <font-awesome-icon icon="link" class="w-4 h-4" />
+          Copiar Link
+        </button>
+
+        <!-- Botão Editar (apenas para usuários confirmados) -->
+        <button
+          v-if="!usuario.isPendente"
           @click="$emit('editar', usuario)"
           class="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
           title="Editar usuário"

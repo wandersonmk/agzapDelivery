@@ -159,6 +159,34 @@ const fecharModalLink = () => {
   linkConvite.value = ''
 }
 
+const copiarLinkConvite = async (usuario: any) => {
+  try {
+    // Gerar novo link de convite
+    const response = await $fetch<{ link: string }>('/api/auth/generate-invite-link', {
+      method: 'POST',
+      body: {
+        email: usuario.email
+      }
+    })
+
+    if (response.link) {
+      // Copiar para clipboard
+      await navigator.clipboard.writeText(response.link)
+      
+      if (toastSuccess.value) {
+        toastSuccess.value('Link de convite copiado! Compartilhe com o usuário.')
+      }
+    } else {
+      throw new Error('Link não gerado')
+    }
+  } catch (error) {
+    console.error('Erro ao copiar link:', error)
+    if (toastError.value) {
+      toastError.value('Erro ao gerar link de convite')
+    }
+  }
+}
+
 const toggleStatus = async (usuario: any) => {
   if (!toggleStatusUsuario.value) return
   
@@ -276,6 +304,7 @@ const excluirUsuario = async (usuario: any) => {
           @editar="abrirModalEditar"
           @toggle-status="toggleStatus"
           @excluir="excluirUsuario"
+          @copiar-link="copiarLinkConvite"
         />
 
         <!-- Estado vazio -->
