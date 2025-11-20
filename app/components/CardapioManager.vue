@@ -1,52 +1,83 @@
 <template>
   <div class="max-w-7xl mx-auto space-y-6">
-    <!-- Cards de métricas -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <!-- Total de Produtos -->
-      <div class="bg-card border border-border rounded-lg p-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm text-muted-foreground">Total de Produtos</p>
-            <p class="text-2xl font-bold text-foreground">{{ produtos.length }}</p>
-            <p class="text-xs text-green-600 mt-1">{{ produtos.filter((p: any) => p.ativo).length }} ativos</p>
-          </div>
-          <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-            <font-awesome-icon icon="utensils" class="w-6 h-6 text-white" />
+    <!-- Tabs de Navegação -->
+    <div class="flex gap-2 border-b border-border">
+      <button
+        @click="tabAtiva = 'produtos'"
+        :class="[
+          'px-4 py-2 border-b-2 font-medium transition-colors',
+          tabAtiva === 'produtos'
+            ? 'border-primary text-primary'
+            : 'border-transparent text-muted-foreground hover:text-foreground'
+        ]"
+      >
+        <font-awesome-icon icon="utensils" class="mr-2" />
+        Produtos e Categorias
+      </button>
+      <button
+        @click="tabAtiva = 'complementos'"
+        :class="[
+          'px-4 py-2 border-b-2 font-medium transition-colors',
+          tabAtiva === 'complementos'
+            ? 'border-primary text-primary'
+            : 'border-transparent text-muted-foreground hover:text-foreground'
+        ]"
+      >
+        <font-awesome-icon icon="plus" class="mr-2" />
+        Complementos e Adicionais
+      </button>
+    </div>
+
+    <!-- Conteúdo das Tabs -->
+    <div v-show="tabAtiva === 'produtos'">
+      <!-- Cards de métricas -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Total de Produtos -->
+        <div class="bg-card border border-border rounded-lg p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-muted-foreground">Total de Produtos</p>
+              <p class="text-2xl font-bold text-foreground">{{ produtos.length }}</p>
+              <p class="text-xs text-green-600 mt-1">{{ produtos.filter((p: any) => p.ativo).length }} ativos</p>
+            </div>
+            <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+              <font-awesome-icon icon="utensils" class="w-6 h-6 text-white" />
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Total de Categorias -->
-      <div class="bg-card border border-border rounded-lg p-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm text-muted-foreground">Categorias</p>
-            <p class="text-2xl font-bold text-foreground">{{ categorias.length }}</p>
-            <p class="text-xs text-green-600 mt-1">bem organizadas</p>
-          </div>
-          <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
-            <font-awesome-icon icon="layer-group" class="w-6 h-6 text-white" />
+        <!-- Total de Categorias -->
+        <div class="bg-card border border-border rounded-lg p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-muted-foreground">Categorias</p>
+              <p class="text-2xl font-bold text-foreground">{{ categorias.length }}</p>
+              <p class="text-xs text-green-600 mt-1">bem organizadas</p>
+            </div>
+            <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
+              <font-awesome-icon icon="layer-group" class="w-6 h-6 text-white" />
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Preço Médio -->
-      <div class="bg-card border border-border rounded-lg p-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm text-muted-foreground">Preço Médio</p>
-            <p class="text-2xl font-bold text-foreground">R$ {{ precoMedio }}</p>
-            <p class="text-xs text-yellow-600 mt-1">valor competitivo</p>
-          </div>
-          <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg flex items-center justify-center">
-            <font-awesome-icon icon="dollar-sign" class="w-6 h-6 text-white" />
+        <!-- Preço Médio -->
+        <div class="bg-card border border-border rounded-lg p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-muted-foreground">Preço Médio</p>
+              <p class="text-2xl font-bold text-foreground">R$ {{ precoMedio }}</p>
+              <p class="text-xs text-yellow-600 mt-1">valor competitivo</p>
+            </div>
+            <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg flex items-center justify-center">
+              <font-awesome-icon icon="dollar-sign" class="w-6 h-6 text-white" />
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Visualização do Cardápio em Lista -->
-    <div class="bg-card border border-border rounded-lg">
+    <!-- Conteúdo Tab Produtos -->
+    <div v-show="tabAtiva === 'produtos'" class="bg-card border border-border rounded-lg">
       <div class="p-6">
         <div class="flex items-center justify-between mb-6">
           <div>
@@ -69,6 +100,11 @@
       </div>
     </div>
 
+    <!-- Conteúdo Tab Complementos -->
+    <div v-show="tabAtiva === 'complementos'">
+      <ComplementosList />
+    </div>
+
     <!-- Modal para Nova Categoria -->
     <ModalNovaCategoria 
       :is-visible="mostrarModalCategoria"
@@ -86,6 +122,7 @@ const { categorias, produtos, adicionarCategoria, carregarCardapio } = useCardap
 
 // Estado da interface
 const mostrarModalCategoria = ref(false)
+const tabAtiva = ref('produtos') // 'produtos' ou 'complementos'
 
 // Carregar dados ao montar o componente
 onMounted(async () => {

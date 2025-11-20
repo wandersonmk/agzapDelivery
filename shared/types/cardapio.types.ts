@@ -1,4 +1,5 @@
 // Tipos para o sistema de cardápio
+import type { GrupoComplemento, ComplementoSelecionado, GrupoComplementoSelecionado } from './complementos.types'
 
 export interface Categoria {
   id: string
@@ -9,7 +10,8 @@ export interface Categoria {
   icone?: string
 }
 
-export interface Complemento {
+// DEPRECATED: Usar GrupoComplemento e Complemento de complementos.types
+export interface ComplementoOld {
   id: string
   nome: string
   preco: number
@@ -40,17 +42,16 @@ export interface Produto {
     nome: string
     multiplicador: number // 1.0 para pequena, 1.2 para média, 1.5 para grande
   }[]
+  // Grupos de complementos disponíveis para este produto
+  grupos_complementos?: GrupoComplemento[]
 }
 
 export interface ItemCarrinho {
   produtoId: string
   produto: Produto
   quantidade: number
-  complementosSelecionados: {
-    complementoId: string
-    complemento: Complemento
-    quantidade: number
-  }[]
+  // Novo sistema de complementos
+  grupos_complementos_selecionados?: GrupoComplementoSelecionado[]
   // Para pizzas
   saboresSelecionados?: SaborPizza[]
   tamanhoSelecionado?: string

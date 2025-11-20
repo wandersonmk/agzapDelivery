@@ -583,6 +583,52 @@
             </div>
           </div>
 
+          <!-- Grupos de Complementos -->
+          <div v-if="gruposDisponiveis.length > 0" class="space-y-3">
+            <label class="block text-sm font-medium text-foreground">
+              Complementos e Adicionais
+            </label>
+            <p class="text-xs text-muted-foreground mb-3">
+              Selecione os grupos de complementos que estarão disponíveis para este produto
+            </p>
+            
+            <div class="space-y-2 max-h-48 overflow-y-auto p-3 bg-muted/10 border border-border rounded-lg">
+              <label
+                v-for="grupo in gruposDisponiveis.filter(g => g.ativo)"
+                :key="grupo.id"
+                class="flex items-start gap-3 p-2 hover:bg-muted/30 rounded-lg cursor-pointer transition-colors"
+              >
+                <input
+                  type="checkbox"
+                  :value="grupo.id"
+                  v-model="formularioProduto.grupos_ids"
+                  class="mt-1 rounded border-border"
+                />
+                <div class="flex-1">
+                  <p class="text-sm font-medium text-foreground">{{ grupo.nome }}</p>
+                  <p v-if="grupo.descricao" class="text-xs text-muted-foreground">{{ grupo.descricao }}</p>
+                  <div class="flex items-center gap-2 mt-1">
+                    <span v-if="grupo.obrigatorio" class="text-xs px-1.5 py-0.5 bg-red-500/20 text-red-700 dark:text-red-300 rounded">
+                      Obrigatório
+                    </span>
+                    <span v-if="grupo.min_opcoes > 0" class="text-xs text-muted-foreground">
+                      Mín: {{ grupo.min_opcoes }}
+                    </span>
+                    <span v-if="grupo.max_opcoes" class="text-xs text-muted-foreground">
+                      Máx: {{ grupo.max_opcoes }}
+                    </span>
+                  </div>
+                </div>
+              </label>
+
+              <div v-if="gruposDisponiveis.filter(g => g.ativo).length === 0" class="text-center py-4 text-muted-foreground text-sm">
+                Nenhum grupo de complementos disponível.
+                <br>
+                <span class="text-xs">Crie grupos na aba "Complementos e Adicionais"</span>
+              </div>
+            </div>
+          </div>
+
           <!-- Status -->
           <div class="flex items-center justify-between">
             <span class="text-sm font-medium text-foreground">
@@ -683,6 +729,7 @@
 
 <script setup lang="ts">
 import type { Categoria, Produto } from '@shared/types/cardapio.types'
+import type { GrupoComplemento } from '@shared/types/complementos.types'
 
 interface Props {
   categorias: Categoria[]
@@ -693,6 +740,15 @@ const props = defineProps<Props>()
 
 // Composable para gerenciar o cardápio
 const { adicionarProduto, editarProduto: editarProdutoCardapio, removerProduto } = useCardapio()
+
+// Composable para gerenciar complementos
+const { buscarGrupos, atualizarGruposDoProduto, buscarGruposDoProduto } = useComplementos()
+const gruposDisponiveis = ref<GrupoComplemento[]>([])
+
+// Carregar grupos ao montar
+onMounted(async () => {
+  gruposDisponiveis.value = await buscarGrupos()
+})
 
 // Estado para controlar quais categorias estão abertas/expandidas
 const categoriasAbertas = ref<Set<string>>(new Set())
@@ -721,7 +777,8 @@ const formularioProduto = ref({
   preco: 0,
   tipo: 'comum' as 'comum' | 'pizza',
   ativo: true,
-  foto: null as File | null
+  foto: null as File | null,
+  grupos_ids: [] as string[] // IDs dos grupos de complementos selecionados
 })
 
 // Estados para o upload de foto
@@ -881,7 +938,7 @@ const fecharModalNovoProduto = () => {
   resetarFormularioProduto()
 }
 
-const salvarNovoProduto = () => {
+const salvarNovoProduto = async () => {
   if (!categoriaSelecionada.value || !podeAdicionarProduto.value) return
   
   if (modoEdicao.value && produtoEditando.value) {
@@ -914,6 +971,11 @@ const salvarNovoProduto = () => {
     // Editar o produto usando o composable
     editarProdutoCardapio(produtoEditando.value.id, produtoAtualizado)
     
+    // Atualizar grupos de complementos
+    if (formularioProduto.value.grupos_ids) {
+      atualizarGruposDoProduto(produtoEditando.value.id, formularioProduto.value.grupos_ids)
+    }
+    
     console.log('Produto editado com sucesso:', produtoEditando.value.id, produtoAtualizado)
     console.log('Nova foto selecionada:', formularioProduto.value.foto ? 'Sim' : 'Não')
     
@@ -945,7 +1007,12 @@ const salvarNovoProduto = () => {
     }
     
     // Adicionar o produto usando o composable
-    adicionarProduto(novoProduto)
+    const produtoCriado = await adicionarProduto(novoProduto)
+    
+    // Vincular grupos de complementos ao produto criado
+    if (produtoCriado && formularioProduto.value.grupos_ids && formularioProduto.value.grupos_ids.length > 0) {
+      await atualizarGruposDoProduto(produtoCriado.id, formularioProduto.value.grupos_ids)
+    }
     
     console.log('Produto adicionado com sucesso:', novoProduto)
     console.log('Arquivo de foto:', formularioProduto.value.foto ? 'Presente' : 'Não selecionado')
@@ -1028,7 +1095,7 @@ const removerFoto = () => {
 }
 
 // Funções para produtos
-const editarProduto = (produto: Produto) => {
+const editarProduto = async (produto: Produto) => {
   // Encontrar a categoria do produto
   const categoria = props.categorias.find(c => c.id === produto.categoriaId)
   if (!categoria) return
@@ -1038,6 +1105,10 @@ const editarProduto = (produto: Produto) => {
   produtoEditando.value = produto
   modoEdicao.value = true
   
+  // Carregar grupos de complementos do produto
+  const grupos = await buscarGruposDoProduto(produto.id)
+  const gruposIds = grupos.map(g => g.id)
+  
   // Preencher o formulário com os dados do produto
   formularioProduto.value = {
     nome: produto.nome,
@@ -1045,7 +1116,8 @@ const editarProduto = (produto: Produto) => {
     preco: produto.preco,
     tipo: produto.tipo,
     ativo: produto.ativo,
-    foto: null // Resetar o input de foto
+    foto: null, // Resetar o input de foto
+    grupos_ids: gruposIds // Grupos selecionados
   }
   
   // Se for pizza, carregar os preços dos tamanhos

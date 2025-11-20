@@ -2,6 +2,7 @@ import type { CardapioState, Categoria, Produto } from '@shared/types/cardapio.t
 
 export const useCardapio = () => {
   const supabase = useSupabaseClient()
+  const { getEmpresaId } = useEmpresa()
   
   // Estado reativo do cardápio
   const cardapioState = useState<CardapioState>('cardapio', () => ({
@@ -13,29 +14,9 @@ export const useCardapio = () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  // Obter empresa_id do usuário logado
-  const obterEmpresaId = async (): Promise<string | null> => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user?.id) return null
-
-      const { data, error: empresaError } = await supabase
-        .from('empresas')
-        .select('id')
-        .eq('usuario_id', user.id)
-        .single()
-
-      if (empresaError) throw empresaError
-      return data?.id || null
-    } catch (e) {
-      console.error('Erro ao obter empresa_id:', e)
-      return null
-    }
-  }
-
   // Carregar categorias do banco
   const carregarCategorias = async () => {
-    const empresaId = await obterEmpresaId()
+    const empresaId = await getEmpresaId()
     if (!empresaId) {
       error.value = 'Empresa não identificada'
       return
@@ -73,7 +54,7 @@ export const useCardapio = () => {
 
   // Carregar produtos do banco
   const carregarProdutos = async () => {
-    const empresaId = await obterEmpresaId()
+    const empresaId = await getEmpresaId()
     if (!empresaId) {
       error.value = 'Empresa não identificada'
       return
@@ -130,7 +111,7 @@ export const useCardapio = () => {
 
   // Funções para categorias
   const adicionarCategoria = async (categoria: Omit<Categoria, 'id'>) => {
-    const empresaId = await obterEmpresaId()
+    const empresaId = await getEmpresaId()
     if (!empresaId) {
       error.value = 'Empresa não identificada'
       return
@@ -206,7 +187,7 @@ export const useCardapio = () => {
 
   // Funções para produtos
   const adicionarProduto = async (produto: Omit<Produto, 'id'>) => {
-    const empresaId = await obterEmpresaId()
+    const empresaId = await getEmpresaId()
     if (!empresaId) {
       error.value = 'Empresa não identificada'
       return
