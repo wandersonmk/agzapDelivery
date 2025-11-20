@@ -83,7 +83,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // 4. Cria o usuário no auth.users com a senha fornecida
-    const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+    const { data: newUser, error: userCreateError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password: senha,
       email_confirm: true, // Confirma o email automaticamente
@@ -92,11 +92,11 @@ export default defineEventHandler(async (event) => {
       }
     })
 
-    if (createError || !newUser.user) {
-      console.error('Erro ao criar usuário:', createError)
+    if (userCreateError || !newUser.user) {
+      console.error('Erro ao criar usuário:', userCreateError)
       throw createError({
         statusCode: 500,
-        message: `Erro ao criar usuário: ${createError?.message || 'Erro desconhecido'}`
+        message: `Erro ao criar usuário: ${userCreateError?.message || 'Erro desconhecido'}`
       })
     }
 
