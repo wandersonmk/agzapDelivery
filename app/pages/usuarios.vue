@@ -124,6 +124,30 @@ const onUsuarioCriado = async () => {
   }
 }
 
+const onConviteEnviado = async (link: string) => {
+  // Recarregar lista de usuários
+  await carregarUsuarios()
+  
+  // Copiar link automaticamente
+  if (navigator.clipboard) {
+    try {
+      await navigator.clipboard.writeText(link)
+      if (toastSuccess.value) {
+        toastSuccess.value('Link de convite copiado! Compartilhe com o usuário.')
+      }
+    } catch (err) {
+      console.error('Erro ao copiar link:', err)
+      if (toastSuccess.value) {
+        toastSuccess.value('Convite enviado! Link: ' + link)
+      }
+    }
+  } else {
+    if (toastSuccess.value) {
+      toastSuccess.value('Convite enviado! Link: ' + link)
+    }
+  }
+}
+
 const toggleStatus = async (usuario: any) => {
   if (!toggleStatusUsuario.value) return
   
@@ -261,6 +285,7 @@ const excluirUsuario = async (usuario: any) => {
       :isOpen="isModalNovoUsuarioOpen"
       @close="fecharModais"
       @usuario-criado="onUsuarioCriado"
+      @convite-enviado="onConviteEnviado"
     />
 
     <ModalEditarUsuario

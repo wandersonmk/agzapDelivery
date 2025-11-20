@@ -19,19 +19,20 @@ export function useUsuarios() {
     try {
       console.log('[useUsuarios] Enviando convite para:', data.email)
 
-      // 1. Enviar convite via API do servidor
+      // 1. Gerar link de convite direto (não envia email - será copiado para clipboard)
+      let inviteLink: string | null = null
       try {
-        await $fetch('/api/auth/invite', {
+        const response = await $fetch<{ link: string }>('/api/auth/generate-invite-link', {
           method: 'POST',
           body: {
-            email: data.email,
-            name: data.nome
+            email: data.email
           }
         })
-        console.log('[useUsuarios] Convite enviado com sucesso')
+        inviteLink = response.link
+        console.log('[useUsuarios] Link de convite gerado:', inviteLink)
       } catch (inviteError: any) {
-        console.warn('[useUsuarios] Aviso ao enviar convite (continuando):', inviteError.message)
-        // Continua mesmo se falhar, pois usuário pode já existir
+        console.warn('[useUsuarios] Aviso ao gerar link (continuando):', inviteError.message)
+        // Continua mesmo se falhar
       }
 
       // 2. Verificar se usuário já existe
@@ -123,7 +124,8 @@ export function useUsuarios() {
       return {
         success: true,
         message: 'Convite enviado com sucesso!',
-        usuarioId
+        usuarioId,
+        link: inviteLink // Link para ser copiado
       }
 
     } catch (error: any) {

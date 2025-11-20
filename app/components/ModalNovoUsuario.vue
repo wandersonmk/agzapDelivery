@@ -10,6 +10,7 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   close: []
   usuarioCriado: []
+  conviteEnviado: [link: string]
 }>()
 
 // Composables
@@ -99,10 +100,16 @@ const salvar = async () => {
     })
 
     if (resultado.success) {
-      if (toast) {
-        toast.success(`Convite enviado para ${form.value.email}!`)
+      // Se retornou link, emite evento para copiar
+      if (resultado.link) {
+        emit('conviteEnviado', resultado.link)
+      } else {
+        // Fallback se não houver link (email enviado normalmente)
+        if (toast) {
+          toast.success(`Convite enviado para ${form.value.email}!`)
+        }
+        emit('usuarioCriado')
       }
-      emit('usuarioCriado')
       emit('close')
     } else {
       erro.value = resultado.message
