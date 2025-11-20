@@ -105,7 +105,26 @@ const salvar = async () => {
       permissoes: permissoesPapel.value
     })
 
-    // Criar usuário direto
+    // Buscar empresa_id do usuário logado
+    const { empresaAtual, getEmpresaId } = useEmpresa()
+    
+    // Se não tem empresa no estado, busca
+    let empresaId = empresaAtual.value?.id
+    if (!empresaId) {
+      empresaId = await getEmpresaId()
+    }
+    
+    if (!empresaId) {
+      erro.value = 'Não foi possível identificar a empresa'
+      if (toast.value) {
+        toast.value.error(erro.value)
+      }
+      return
+    }
+
+    console.log('[ModalNovoUsuario] Criando usuário para empresa:', empresaId)
+
+    // Criar usuário direto (SEM fazer login dele)
     const response = await $fetch('/api/auth/create-user-direct', {
       method: 'POST',
       body: {
@@ -113,7 +132,8 @@ const salvar = async () => {
         email: form.value.email,
         senha: form.value.senha,
         papel: form.value.papel,
-        permissoes: permissoesPapel.value
+        permissoes: permissoesPapel.value,
+        empresaId: empresaId
       }
     })
 
