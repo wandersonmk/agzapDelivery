@@ -43,10 +43,6 @@ export interface Permissoes {
     editar_empresa: boolean
     gerenciar_usuarios: boolean
   }
-  financeiro: {
-    visualizar_valores: boolean
-    gerar_relatorios: boolean
-  }
 }
 
 /**
@@ -57,43 +53,37 @@ export const PERMISSOES_PADRAO: Record<PapelUsuario, Permissoes> = {
     pedidos: { criar: true, editar: true, excluir: true, visualizar: true, alterar_status: true },
     cardapio: { criar_produto: true, editar_produto: true, excluir_produto: true, ativar_desativar: true },
     relatorios: { visualizar: true, exportar: true },
-    configuracoes: { editar_empresa: true, gerenciar_usuarios: true },
-    financeiro: { visualizar_valores: true, gerar_relatorios: true }
+    configuracoes: { editar_empresa: true, gerenciar_usuarios: true }
   },
   admin: {
     pedidos: { criar: true, editar: true, excluir: true, visualizar: true, alterar_status: true },
     cardapio: { criar_produto: true, editar_produto: true, excluir_produto: true, ativar_desativar: true },
     relatorios: { visualizar: true, exportar: true },
-    configuracoes: { editar_empresa: true, gerenciar_usuarios: true },
-    financeiro: { visualizar_valores: true, gerar_relatorios: true }
+    configuracoes: { editar_empresa: true, gerenciar_usuarios: true }
   },
   gerente: {
     pedidos: { criar: true, editar: true, excluir: false, visualizar: true, alterar_status: true },
     cardapio: { criar_produto: true, editar_produto: true, excluir_produto: false, ativar_desativar: true },
     relatorios: { visualizar: true, exportar: true },
-    configuracoes: { editar_empresa: false, gerenciar_usuarios: false },
-    financeiro: { visualizar_valores: true, gerar_relatorios: true }
+    configuracoes: { editar_empresa: false, gerenciar_usuarios: false }
   },
   atendente: {
     pedidos: { criar: true, editar: true, excluir: false, visualizar: true, alterar_status: true },
     cardapio: { criar_produto: false, editar_produto: false, excluir_produto: false, ativar_desativar: false },
     relatorios: { visualizar: false, exportar: false },
-    configuracoes: { editar_empresa: false, gerenciar_usuarios: false },
-    financeiro: { visualizar_valores: true, gerar_relatorios: false }
+    configuracoes: { editar_empresa: false, gerenciar_usuarios: false }
   },
   cozinha: {
     pedidos: { criar: false, editar: false, excluir: false, visualizar: true, alterar_status: true },
     cardapio: { criar_produto: false, editar_produto: false, excluir_produto: false, ativar_desativar: false },
     relatorios: { visualizar: false, exportar: false },
-    configuracoes: { editar_empresa: false, gerenciar_usuarios: false },
-    financeiro: { visualizar_valores: false, gerar_relatorios: false }
+    configuracoes: { editar_empresa: false, gerenciar_usuarios: false }
   },
   entregador: {
     pedidos: { criar: false, editar: false, excluir: false, visualizar: true, alterar_status: true },
     cardapio: { criar_produto: false, editar_produto: false, excluir_produto: false, ativar_desativar: false },
     relatorios: { visualizar: false, exportar: false },
-    configuracoes: { editar_empresa: false, gerenciar_usuarios: false },
-    financeiro: { visualizar_valores: false, gerar_relatorios: false }
+    configuracoes: { editar_empresa: false, gerenciar_usuarios: false }
   }
 }
 

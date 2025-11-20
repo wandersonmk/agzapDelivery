@@ -14,7 +14,7 @@
  */
 
 export interface RoutePermission {
-  modulo: 'pedidos' | 'cardapio' | 'relatorios' | 'configuracoes' | 'financeiro'
+  modulo: 'pedidos' | 'cardapio' | 'relatorios' | 'configuracoes'
   acao: string
   descricao?: string
 }
@@ -41,10 +41,10 @@ export const ROUTE_PERMISSIONS: Record<string, RoutePermission | null> = {
     descricao: 'Gerenciar produtos do cardápio'
   },
   
-  // Clientes - Requer visualizar valores financeiros (atendentes e acima)
+  // Clientes - Requer visualizar relatórios (atendentes e acima)
   '/clientes': {
-    modulo: 'financeiro',
-    acao: 'visualizar_valores',
+    modulo: 'relatorios',
+    acao: 'visualizar',
     descricao: 'Visualizar e gerenciar clientes'
   },
   
@@ -76,10 +76,10 @@ export const ROUTE_PERMISSIONS: Record<string, RoutePermission | null> = {
     descricao: 'Gerenciar usuários e permissões'
   },
   
-  // Ajuda - Requer visualizar valores (atendentes e acima) 
+  // Ajuda - Requer visualizar relatórios (atendentes e acima) 
   '/ajuda': {
-    modulo: 'financeiro',
-    acao: 'visualizar_valores',
+    modulo: 'relatorios',
+    acao: 'visualizar',
     descricao: 'Central de ajuda e suporte'
   },
   

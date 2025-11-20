@@ -367,41 +367,6 @@ const salvar = () => {
                 </div>
               </div>
 
-              <!-- Financeiro -->
-              <div>
-                <p class="text-xs font-medium text-foreground mb-2">Financeiro</p>
-                <div class="space-y-1">
-                  <label class="flex items-center gap-2 text-xs cursor-pointer">
-                    <input
-                      v-if="form.permissoesPersonalizadas && form.permissoes"
-                      v-model="form.permissoes.financeiro.visualizar_valores"
-                      type="checkbox"
-                      class="rounded border-border"
-                    />
-                    <font-awesome-icon
-                      v-else
-                      :icon="permissoesAtivas.financeiro.visualizar_valores ? 'check' : 'times'"
-                      :class="permissoesAtivas.financeiro.visualizar_valores ? 'text-green-600' : 'text-red-600'"
-                    />
-                    <span class="text-muted-foreground">Ver Valores</span>
-                  </label>
-                  <label class="flex items-center gap-2 text-xs cursor-pointer">
-                    <input
-                      v-if="form.permissoesPersonalizadas && form.permissoes"
-                      v-model="form.permissoes.financeiro.gerar_relatorios"
-                      type="checkbox"
-                      class="rounded border-border"
-                    />
-                    <font-awesome-icon
-                      v-else
-                      :icon="permissoesAtivas.financeiro.gerar_relatorios ? 'check' : 'times'"
-                      :class="permissoesAtivas.financeiro.gerar_relatorios ? 'text-green-600' : 'text-red-600'"
-                    />
-                    <span class="text-muted-foreground">Gerar Relatórios</span>
-                  </label>
-                </div>
-              </div>
-
               <!-- Configurações -->
               <div>
                 <p class="text-xs font-medium text-foreground mb-2">Configurações</p>

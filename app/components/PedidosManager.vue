@@ -234,6 +234,7 @@ const {
 
 // Usar o composable de empresa para verificar permissões
 const { temPermissao, buscarConfiguracoes } = useEmpresa()
+const { podeAlterarStatusPedido } = usePermissoes()
 
 // Buscar configurações da empresa
 const configEmpresa = ref<any>(null)
@@ -355,11 +356,25 @@ const closeModal = () => {
 }
 
 const acceptOrder = async (pedidoId: string) => {
+  // Verificar permissão antes de alterar status
+  if (!await podeAlterarStatusPedido()) {
+    const toast = await useToastSafe()
+    if (toast) toast.error('Você não tem permissão para alterar status de pedidos')
+    return
+  }
+  
   stopNotification() // Parar o som quando aceitar
   await updateOrderStatus(pedidoId, 'cozinha')
 }
 
 const markAsReady = async (pedidoId: string) => {
+  // Verificar permissão antes de alterar status
+  if (!await podeAlterarStatusPedido()) {
+    const toast = await useToastSafe()
+    if (toast) toast.error('Você não tem permissão para alterar status de pedidos')
+    return
+  }
+  
   const pedido = pedidos.value.find(p => p.id === pedidoId)
   if (pedido) {
     const nextStatus = pedido.tipoEntrega === 'entrega' ? 'entrega' : 'concluido'
@@ -368,6 +383,13 @@ const markAsReady = async (pedidoId: string) => {
 }
 
 const completeOrder = async (pedidoId: string) => {
+  // Verificar permissão antes de alterar status
+  if (!await podeAlterarStatusPedido()) {
+    const toast = await useToastSafe()
+    if (toast) toast.error('Você não tem permissão para alterar status de pedidos')
+    return
+  }
+  
   await updateOrderStatus(pedidoId, 'concluido')
 }
 

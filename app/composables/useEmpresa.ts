@@ -21,9 +21,14 @@ export interface EmpresaConfig {
 
 export function useEmpresa() {
   // Estados globais
-  const empresaAtual = useState<EmpresaDisponivel | null>('empresa_atual', () => null)
-  const empresasDisponiveis = useState<EmpresaDisponivel[]>('empresas_disponiveis', () => [])
-  const isLoadingEmpresa = useState<boolean>('empresa_loading', () => false)
+  const _empresaAtual = useState<EmpresaDisponivel | null>('empresa_atual', () => null)
+  const _empresasDisponiveis = useState<EmpresaDisponivel[]>('empresas_disponiveis', () => [])
+  const _isLoadingEmpresa = useState<boolean>('empresa_loading', () => false)
+  
+  // Referências para uso interno (sem readonly)
+  const empresaAtual = _empresaAtual
+  const empresasDisponiveis = _empresasDisponiveis
+  const isLoadingEmpresa = _isLoadingEmpresa
 
   // Computed para compatibilidade com código legado
   const nomeEmpresa = computed(() => empresaAtual.value?.nome || null)
@@ -230,6 +235,23 @@ export function useEmpresa() {
   }
 
   /**
+   * Obtém as permissões do usuário na empresa atual
+   */
+  async function getPermissoes(): Promise<Permissoes | null> {
+    // Se já tem empresa carregada, retorna as permissões
+    const empresa = empresaAtual.value
+    if (empresa) {
+      return empresa.permissoes
+    }
+
+    // Se não tem, busca empresas disponíveis
+    const empresas = await buscarEmpresasDisponiveis()
+    
+    // Retorna permissões da primeira empresa (se houver)
+    return empresas.length > 0 && empresas[0] ? empresas[0].permissoes : null
+  }
+
+  /**
    * Verifica se usuário tem permissão específica
    */
   function temPermissao(modulo: keyof Permissoes, acao: string): boolean {
@@ -249,10 +271,10 @@ export function useEmpresa() {
 
   return {
     // Estados
-    empresaAtual: readonly(empresaAtual),
-    empresasDisponiveis: readonly(empresasDisponiveis),
+    empresaAtual: readonly(_empresaAtual),
+    empresasDisponiveis: readonly(_empresasDisponiveis),
     nomeEmpresa, // Computed - compatibilidade
-    isLoadingEmpresa: readonly(isLoadingEmpresa),
+    isLoadingEmpresa: readonly(_isLoadingEmpresa),
     
     // Funções principais
     buscarEmpresasDisponiveis,
@@ -263,6 +285,7 @@ export function useEmpresa() {
     salvarConfiguracoes,
     
     // Funções de permissão
+    getPermissoes,
     temPermissao,
     temPapel
   }
