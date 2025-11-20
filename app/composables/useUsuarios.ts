@@ -35,38 +35,38 @@ export function useUsuarios() {
         // Continua mesmo se falhar
       }
 
-      // 2. Verificar se usuário já existe
-      const { data: usuarioExistente, error: errorBusca } = await supabase
-        .from('usuarios')
-        .select('id')
-        .eq('email', data.email)
-        .single()
-
+      // 2. Criar usuário via Auth Admin API (evita trigger handle_new_usuario)
       let usuarioId: string
-
-      if (usuarioExistente) {
-        // Usuário já existe
-        usuarioId = usuarioExistente.id
-        console.log('[useUsuarios] Usuário já existe:', usuarioId)
-      } else {
-        // 3. Criar registro na tabela usuarios (pendente até aceitar convite)
-        const { data: novoUsuario, error: errorUsuario } = await supabase
-          .from('usuarios')
-          .insert({
+      
+      try {
+        // Chamar API do servidor para criar usuário via Supabase Auth
+        const createResult = await $fetch<{ userId: string }>('/api/auth/create-user', {
+          method: 'POST',
+          body: {
             email: data.email,
-            nome: data.nome, // Nome fornecido pelo admin
-            foto: null
-          })
-          .select()
+            name: data.nome
+          }
+        })
+        
+        usuarioId = createResult.userId
+        console.log('[useUsuarios] Usuário criado via Auth:', usuarioId)
+      } catch (createError: any) {
+        // Se falhar (usuário já existe), buscar o ID existente
+        console.log('[useUsuarios] Usuário pode já existir, buscando...')
+        
+        const { data: usuarioExistente, error: errorBusca } = await supabase
+          .from('usuarios')
+          .select('id')
+          .eq('email', data.email)
           .single()
 
-        if (errorUsuario) {
-          console.error('[useUsuarios] Erro ao criar usuário:', errorUsuario)
-          throw errorUsuario
+        if (errorBusca || !usuarioExistente) {
+          console.error('[useUsuarios] Erro ao buscar usuário existente:', errorBusca)
+          throw new Error('Não foi possível criar ou encontrar o usuário')
         }
 
-        usuarioId = novoUsuario.id
-        console.log('[useUsuarios] Novo usuário criado:', usuarioId)
+        usuarioId = usuarioExistente.id
+        console.log('[useUsuarios] Usuário já existe:', usuarioId)
       }
 
       // 4. Obter empresa_id
