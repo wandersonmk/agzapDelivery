@@ -25,7 +25,8 @@ export function useUsuarios() {
         const response = await $fetch<{ link: string }>('/api/auth/generate-invite-link', {
           method: 'POST',
           body: {
-            email: data.email
+            email: data.email,
+            nome: data.nome // Passar nome para criar usuário com metadata
           }
         })
         inviteLink = response.link

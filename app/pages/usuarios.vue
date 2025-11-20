@@ -165,7 +165,8 @@ const copiarLinkConvite = async (usuario: any) => {
     const response = await $fetch<{ link: string }>('/api/auth/generate-invite-link', {
       method: 'POST',
       body: {
-        email: usuario.email
+        email: usuario.email,
+        nome: usuario.nome || '' // Passar nome se disponível
       }
     })
 
@@ -382,20 +383,29 @@ const excluirUsuario = async (usuario: any) => {
               <label class="block text-sm font-medium text-foreground mb-2">
                 Link de Convite
               </label>
-              <div class="flex gap-2">
-                <input
-                  type="text"
-                  :value="linkConvite"
-                  readonly
-                  class="flex-1 px-4 py-3 border border-border rounded-lg bg-muted/50 text-foreground font-mono text-sm"
-                  @click="($event.target as HTMLInputElement).select()"
-                />
+              <div class="space-y-2">
+                <!-- Link clicável -->
+                <a
+                  :href="linkConvite"
+                  target="_blank"
+                  class="block px-4 py-3 border-2 border-primary/30 rounded-lg bg-primary/5 hover:bg-primary/10 transition-colors group"
+                >
+                  <div class="flex items-center gap-2">
+                    <font-awesome-icon icon="external-link-alt" class="text-primary text-sm" />
+                    <span class="text-sm text-foreground font-mono break-all group-hover:text-primary transition-colors">
+                      {{ linkConvite }}
+                    </span>
+                  </div>
+                </a>
+                
+                <!-- Botão copiar -->
                 <AppButton
                   @click="copiarLink"
-                  class="px-6"
+                  class="w-full"
+                  variant="outline"
                 >
                   <font-awesome-icon icon="copy" class="mr-2" />
-                  Copiar
+                  Copiar Link
                 </AppButton>
               </div>
               <p class="text-xs text-muted-foreground mt-2">

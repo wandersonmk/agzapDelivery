@@ -1,7 +1,7 @@
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event)
-    const { email } = body
+    const { email, nome } = body
 
     if (!email) {
       throw createError({
@@ -23,7 +23,34 @@ export default defineEventHandler(async (event) => {
 
     console.log('[generate-invite-link] Gerando link com redirect:', redirectUrl)
 
-    // Gerar token de convite
+    // 1. Criar usuário primeiro (necessário para generate_link)
+    try {
+      await $fetch<any>(`${supabaseUrl}/auth/v1/admin/users`, {
+        method: 'POST',
+        headers: {
+          'apikey': serviceRoleKey,
+          'Authorization': `Bearer ${serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: {
+          email,
+          email_confirm: false, // Usuário precisa confirmar
+          user_metadata: {
+            nome: nome || ''
+          }
+        }
+      })
+      console.log('[generate-invite-link] Usuário criado')
+    } catch (createError: any) {
+      // Se já existir (422), continuar para gerar o link
+      if (createError.response?.status !== 422) {
+        console.error('[generate-invite-link] Erro ao criar usuário:', createError)
+        throw createError
+      }
+      console.log('[generate-invite-link] Usuário já existe, gerando link...')
+    }
+
+    // 2. Gerar token de convite
     const response = await $fetch<any>(`${supabaseUrl}/auth/v1/admin/generate_link`, {
       method: 'POST',
       headers: {
