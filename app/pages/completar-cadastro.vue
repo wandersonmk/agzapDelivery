@@ -1,7 +1,7 @@
 <script setup lang="ts">
 definePageMeta({
-  layout: 'auth',
-  middleware: 'guest'
+  layout: 'auth'
+  // Sem middleware - permite acesso direto via link de convite
 })
 
 const router = useRouter()

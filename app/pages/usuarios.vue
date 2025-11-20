@@ -139,17 +139,15 @@ const onConviteEnviado = async (link: string) => {
 }
 
 const copiarLink = async () => {
-  if (navigator.clipboard) {
-    try {
-      await navigator.clipboard.writeText(linkConvite.value)
-      if (toastSuccess.value) {
-        toastSuccess.value('Link copiado! Compartilhe com o usuário.')
-      }
-    } catch (err) {
-      console.error('Erro ao copiar link:', err)
-      if (toastError.value) {
-        toastError.value('Erro ao copiar. Copie manualmente.')
-      }
+  try {
+    await navigator.clipboard.writeText(linkConvite.value)
+    if (toastSuccess.value) {
+      toastSuccess.value('✓ Link copiado para área de transferência!')
+    }
+  } catch (err) {
+    console.error('Erro ao copiar link:', err)
+    if (toastError.value) {
+      toastError.value('Erro ao copiar. Tente copiar manualmente.')
     }
   }
 }
