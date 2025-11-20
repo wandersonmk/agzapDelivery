@@ -52,11 +52,12 @@ const carregarUsuarios = async () => {
     usuarios.value = dados.map((vinculo: any) => ({
       id: vinculo.id, // ID do vínculo
       usuarioId: vinculo.usuarios?.id,
-      nome: vinculo.usuarios?.nome || 'Usuário Pendente',
+      nome: vinculo.usuarios?.nome || 'Convite Pendente',
       email: vinculo.usuarios?.email || 'Email não disponível',
       foto: vinculo.usuarios?.foto,
       papel: vinculo.papel,
       ativo: vinculo.ativo,
+      isPendente: vinculo.isPendente || false, // Flag de convite pendente
       vinculadoEm: new Date(vinculo.created_at)
     }))
     

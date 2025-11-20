@@ -9,6 +9,7 @@ interface Props {
     email: string
     papel: PapelUsuario
     ativo: boolean
+    isPendente?: boolean
     vinculadoEm: Date
   }
 }
@@ -102,6 +103,14 @@ const papelIcon = computed(() => {
             
             <!-- Badge de status -->
             <span
+              v-if="usuario.isPendente"
+              class="px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 flex items-center gap-1"
+            >
+              <font-awesome-icon icon="clock" class="text-xs" />
+              Convite Pendente
+            </span>
+            <span
+              v-else
               :class="[
                 'px-2 py-0.5 text-xs font-medium rounded-full',
                 usuario.ativo

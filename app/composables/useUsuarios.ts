@@ -35,96 +35,37 @@ export function useUsuarios() {
         // Continua mesmo se falhar
       }
 
-      // 2. Criar usuário via Auth Admin API (evita trigger handle_new_usuario)
-      let usuarioId: string
-      
-      try {
-        // Chamar API do servidor para criar usuário via Supabase Auth
-        const createResult = await $fetch<{ userId: string }>('/api/auth/create-user', {
-          method: 'POST',
-          body: {
-            email: data.email,
-            name: data.nome
-          }
-        })
-        
-        usuarioId = createResult.userId
-        console.log('[useUsuarios] Usuário criado via Auth:', usuarioId)
-      } catch (createError: any) {
-        // Se falhar (usuário já existe), buscar o ID existente
-        console.log('[useUsuarios] Usuário pode já existir, buscando...')
-        
-        const { data: usuarioExistente, error: errorBusca } = await supabase
-          .from('usuarios')
-          .select('id')
-          .eq('email', data.email)
-          .single()
-
-        if (errorBusca || !usuarioExistente) {
-          console.error('[useUsuarios] Erro ao buscar usuário existente:', errorBusca)
-          throw new Error('Não foi possível criar ou encontrar o usuário')
-        }
-
-        usuarioId = usuarioExistente.id
-        console.log('[useUsuarios] Usuário já existe:', usuarioId)
-      }
-
-      // 4. Obter empresa_id
+      // 2. Obter empresa_id do admin logado
       const empresaId = await getEmpresaId()
       if (!empresaId) {
         throw new Error('Empresa não encontrada')
       }
 
-      // 5. Verificar se já existe vínculo
-      const { data: vinculoExistente } = await supabase
-        .from('usuarios_empresas')
-        .select('id')
-        .eq('usuario_id', usuarioId)
-        .eq('empresa_id', empresaId)
-        .single()
+      // 3. Salvar dados do convite pendente em uma tabela temporária
+      // Isso permite criar o vínculo antes do usuário aceitar o convite
+      const { error: errorConvitePendente } = await supabase
+        .from('convites_pendentes')
+        .upsert({
+          email: data.email,
+          nome: data.nome,
+          empresa_id: empresaId,
+          papel: data.papel,
+          permissoes: data.permissoes,
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 dias
+        }, {
+          onConflict: 'email,empresa_id'
+        })
 
-      if (vinculoExistente) {
-        // Atualizar vínculo existente
-        const { error: errorUpdate } = await supabase
-          .from('usuarios_empresas')
-          .update({
-            papel: data.papel,
-            permissoes: data.permissoes,
-            ativo: true,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', vinculoExistente.id)
-
-        if (errorUpdate) {
-          console.error('[useUsuarios] Erro ao atualizar vínculo:', errorUpdate)
-          throw errorUpdate
-        }
-
-        console.log('[useUsuarios] Vínculo atualizado')
+      if (errorConvitePendente) {
+        console.error('[useUsuarios] Erro ao salvar convite pendente:', errorConvitePendente)
+        // Continua mesmo se falhar - convite ainda será enviado
       } else {
-        // 6. Criar novo vínculo na tabela usuarios_empresas
-        const { error: errorVinculo } = await supabase
-          .from('usuarios_empresas')
-          .insert({
-            usuario_id: usuarioId,
-            empresa_id: empresaId,
-            papel: data.papel,
-            permissoes: data.permissoes,
-            ativo: true
-          })
-
-        if (errorVinculo) {
-          console.error('[useUsuarios] Erro ao criar vínculo:', errorVinculo)
-          throw errorVinculo
-        }
-
-        console.log('[useUsuarios] Vínculo criado com sucesso')
+        console.log('[useUsuarios] Convite pendente salvo com sucesso')
       }
 
       return {
         success: true,
         message: 'Convite enviado com sucesso!',
-        usuarioId,
         link: inviteLink // Link para ser copiado
       }
 
@@ -177,7 +118,42 @@ export function useUsuarios() {
 
       console.log('[useUsuarios] Resultado final com empresa:', vinculos)
 
-      return vinculos
+      // Buscar também convites pendentes
+      const { data: convitesPendentes, error: errorConvites } = await supabase
+        .from('convites_pendentes')
+        .select('*')
+        .eq('empresa_id', empresaId)
+        .order('created_at', { ascending: false })
+
+      console.log('[useUsuarios] Convites pendentes:', convitesPendentes)
+
+      // Combinar usuários confirmados e pendentes
+      const resultado = [
+        ...vinculos,
+        ...(convitesPendentes || []).map(convite => ({
+          id: convite.id,
+          usuario_id: null,
+          empresa_id: convite.empresa_id,
+          papel: convite.papel,
+          permissoes: convite.permissoes,
+          ativo: false,
+          created_at: convite.created_at,
+          updated_at: null,
+          usuarios: {
+            id: null,
+            nome: convite.nome,
+            email: convite.email,
+            foto: null
+          },
+          empresas: vinculos[0]?.empresas || null,
+          isPendente: true, // Flag para identificar convites pendentes
+          expires_at: convite.expires_at
+        }))
+      ]
+
+      console.log('[useUsuarios] Resultado final (com pendentes):', resultado)
+
+      return resultado
 
     } catch (error) {
       console.error('[useUsuarios] Erro ao buscar usuários:', error)
