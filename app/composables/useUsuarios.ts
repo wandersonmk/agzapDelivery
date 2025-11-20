@@ -151,10 +151,14 @@ export function useUsuarios() {
 
       console.log('[useUsuarios] Buscando usuários da empresa:', empresaId)
 
-      // Primeira tentativa: buscar apenas os vínculos
+      // Buscar vínculos com JOIN para trazer dados do usuário E da empresa
       const { data: vinculos, error: errorVinculos } = await supabase
         .from('usuarios_empresas')
-        .select('*')
+        .select(`
+          *,
+          usuarios (id, nome, email, foto),
+          empresas (id, nome)
+        `)
         .eq('empresa_id', empresaId)
         .order('created_at', { ascending: false })
 
@@ -171,31 +175,9 @@ export function useUsuarios() {
         return []
       }
 
-      // Segunda tentativa: buscar dados dos usuários separadamente
-      const usuarioIds = vinculos.map(v => v.usuario_id)
-      console.log('[useUsuarios] IDs dos usuários:', usuarioIds)
+      console.log('[useUsuarios] Resultado final com empresa:', vinculos)
 
-      const { data: usuarios, error: errorUsuarios } = await supabase
-        .from('usuarios')
-        .select('id, nome, email, foto')
-        .in('id', usuarioIds)
-
-      console.log('[useUsuarios] Usuários encontrados:', usuarios)
-      console.log('[useUsuarios] Erro nos usuários:', errorUsuarios)
-
-      if (errorUsuarios) {
-        console.error('[useUsuarios] Erro ao buscar usuários:', errorUsuarios)
-      }
-
-      // Combinar os dados
-      const resultado = vinculos.map(vinculo => ({
-        ...vinculo,
-        usuarios: usuarios?.find(u => u.id === vinculo.usuario_id) || null
-      }))
-
-      console.log('[useUsuarios] Resultado final:', resultado)
-
-      return resultado
+      return vinculos
 
     } catch (error) {
       console.error('[useUsuarios] Erro ao buscar usuários:', error)

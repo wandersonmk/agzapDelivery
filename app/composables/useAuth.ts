@@ -101,8 +101,8 @@ export function useAuth() {
         password,
         options: {
           data: { 
-            nome,
-            nome_empresa: nomeEmpresa
+            nome
+            // nome_empresa removido - vínculo feito via usuarios_empresas
           }
         }
       })

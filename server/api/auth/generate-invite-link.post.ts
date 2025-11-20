@@ -14,6 +14,15 @@ export default defineEventHandler(async (event) => {
     const supabaseUrl = config.public.supabaseUrl
     const serviceRoleKey = config.supabaseServiceRoleKey
 
+    // Obter URL base da requisição
+    const headers = getHeaders(event)
+    const host = headers.host || 'localhost:3000'
+    const protocol = headers['x-forwarded-proto'] || (host.includes('localhost') ? 'http' : 'https')
+    const baseUrl = `${protocol}://${host}`
+    const redirectUrl = `${baseUrl}/completar-cadastro`
+
+    console.log('[generate-invite-link] Gerando link com redirect:', redirectUrl)
+
     // Gerar token de convite
     const response = await $fetch<any>(`${supabaseUrl}/auth/v1/admin/generate_link`, {
       method: 'POST',
@@ -26,9 +35,7 @@ export default defineEventHandler(async (event) => {
         type: 'invite',
         email,
         options: {
-          redirect_to: process.env.NODE_ENV === 'production'
-            ? 'https://agzap-delivery.vercel.app/completar-cadastro'
-            : 'http://localhost:3001/completar-cadastro'
+          redirect_to: redirectUrl
         }
       }
     })
