@@ -5,49 +5,20 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   }
   
   try {
-    // Verificar primeiro se há email salvo no localStorage
-    const savedEmail = localStorage.getItem('user_email')
+    const supabase = useSupabaseClient()
     
-    console.log('Guest middleware - Verificação localStorage:', { 
-      hasSavedEmail: !!savedEmail,
-      savedEmail 
-    })
+    // Verificação direta da sessão
+    const { data: { session } } = await supabase.auth.getSession()
     
-    // Se não há email salvo, permite acesso à página de login
-    if (!savedEmail) {
-      console.log('Guest middleware: Sem email salvo, permitindo acesso ao login')
-      return
-    }
-    
-    const { isAuthenticated, user, isLoading } = useAuth()
-    
-    console.log('Guest middleware - Estado auth:', { 
-      isAuthenticated: isAuthenticated.value, 
-      hasUser: !!user.value,
-      isLoading: isLoading.value,
-      email: user.value?.email 
-    })
-    
-    // Aguarda apenas um curto período se ainda estiver carregando
-    if (isLoading.value) {
-      await new Promise(resolve => setTimeout(resolve, 500))
-    }
-    
-    console.log('Guest middleware - Após loading:', { 
-      isAuthenticated: isAuthenticated.value, 
-      hasUser: !!user.value,
-      isLoading: isLoading.value,
-      email: user.value?.email 
-    })
-    
-    // Se já está autenticado OU tem email salvo, redireciona para a página principal
-    if ((isAuthenticated.value && user.value) || savedEmail) {
-      console.log('Guest middleware: Redirecionando para /')
+    // Se já está autenticado, redireciona para home
+    if (session) {
+      console.log('Guest middleware: Usuário já autenticado, redirecionando para /')
       return navigateTo('/')
     }
+    
+    console.log('Guest middleware: Sem sessão, permitindo acesso')
   } catch (error) {
-    // Se houver erro na inicialização, permite acesso à página de login
     console.error('Erro no middleware guest:', error)
-    // Não redireciona, permite que o usuário veja a página de login
+    // Em caso de erro, permite acesso à página
   }
 })
