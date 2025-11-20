@@ -103,21 +103,62 @@ const completarCadastro = async () => {
     console.log('[completar-cadastro] Usuário autenticado:', user.id)
     console.log('[completar-cadastro] User metadata:', user.user_metadata)
 
-    // Obter nome do metadata ou usar email como fallback
-    const nomeUsuario = user.user_metadata?.name || user.email?.split('@')[0] || 'Usuário'
-    console.log('[completar-cadastro] Nome do usuário:', nomeUsuario)
+    // Buscar convite pendente para este email
+    const { data: convitePendente, error: conviteError } = await supabase
+      .from('convites_pendentes')
+      .select('*')
+      .eq('email', user.email)
+      .single()
 
-    // Atualizar nome na tabela usuarios (caso não tenha)
-    const { error: updateUsuarioError } = await supabase
+    if (conviteError || !convitePendente) {
+      console.error('[completar-cadastro] Convite não encontrado:', conviteError)
+      erro.value = 'Convite não encontrado. Entre em contato com o administrador.'
+      return
+    }
+
+    console.log('[completar-cadastro] Convite encontrado:', convitePendente)
+
+    // Criar registro na tabela usuarios com nome do convite
+    const { error: insertUsuarioError } = await supabase
       .from('usuarios')
-      .update({ 
-        nome: nomeUsuario,
-        updated_at: new Date().toISOString()
+      .insert({
+        id: user.id,
+        nome: convitePendente.nome,
+        email: user.email,
+        foto: null
       })
-      .eq('id', user.id)
 
-    if (updateUsuarioError) {
-      console.warn('[completar-cadastro] Erro ao atualizar usuário:', updateUsuarioError)
+    if (insertUsuarioError && insertUsuarioError.code !== '23505') { // Ignora erro de duplicado
+      console.error('[completar-cadastro] Erro ao criar usuário:', insertUsuarioError)
+    }
+
+    // Criar vínculo usuarios_empresas com papel e permissões do convite
+    const { error: vinculoError } = await supabase
+      .from('usuarios_empresas')
+      .insert({
+        usuario_id: user.id,
+        empresa_id: convitePendente.empresa_id,
+        papel: convitePendente.papel,
+        permissoes: convitePendente.permissoes,
+        ativo: true
+      })
+
+    if (vinculoError) {
+      console.error('[completar-cadastro] Erro ao criar vínculo:', vinculoError)
+      erro.value = 'Erro ao vincular usuário à empresa. Entre em contato com o administrador.'
+      return
+    }
+
+    console.log('[completar-cadastro] Vínculo criado com sucesso')
+
+    // Remover convite pendente (já foi aceito)
+    const { error: deleteError } = await supabase
+      .from('convites_pendentes')
+      .delete()
+      .eq('email', user.email)
+
+    if (deleteError) {
+      console.warn('[completar-cadastro] Erro ao remover convite pendente:', deleteError)
     }
 
     // Redirecionar para dashboard
