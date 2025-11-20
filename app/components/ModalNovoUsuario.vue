@@ -113,7 +113,13 @@ const salvar = async () => {
     })
 
     if (resultado.success) {
-      // Se retornou link, emite evento para copiar
+      // Fechar modal primeiro
+      emit('close')
+      
+      // Aguardar um pouco para o modal fechar antes de abrir o próximo
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      // Se retornou link, emite evento para mostrar modal de link
       if (resultado.link) {
         emit('conviteEnviado', resultado.link)
       } else {
@@ -123,7 +129,6 @@ const salvar = async () => {
         }
         emit('usuarioCriado')
       }
-      emit('close')
     } else {
       erro.value = resultado.message
       if (toast.value) {
