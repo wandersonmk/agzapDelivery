@@ -15,6 +15,7 @@ const emit = defineEmits<{
 
 // Estado do formulário
 const form = ref({
+  nome: '',
   papel: 'atendente' as PapelUsuario,
   permissoesPersonalizadas: false,
   permissoes: null as Permissoes | null
@@ -24,6 +25,7 @@ const form = ref({
 watch(() => [props.isOpen, props.usuario], ([isOpen, usuario]) => {
   if (isOpen && usuario) {
     form.value = {
+      nome: usuario.nome || '',
       papel: usuario.papel,
       permissoesPersonalizadas: false,
       permissoes: PERMISSOES_PADRAO[usuario.papel as PapelUsuario]
@@ -81,8 +83,18 @@ const resetarParaPadrao = () => {
 
 const salvar = () => {
   console.log('Salvar alterações:', form.value)
-  // Aqui virá a lógica de banco de dados
-  emit('salvar', form.value)
+  
+  // Preparar dados para envio
+  const dataToSave = {
+    nome: form.value.nome,
+    papel: form.value.papel,
+    permissoes: form.value.permissoesPersonalizadas 
+      ? form.value.permissoes 
+      : PERMISSOES_PADRAO[form.value.papel],
+    permissoesPersonalizadas: form.value.permissoesPersonalizadas
+  }
+  
+  emit('salvar', dataToSave)
   emit('close')
 }
 </script>
@@ -113,6 +125,19 @@ const salvar = () => {
 
         <!-- Body -->
         <div class="p-6 space-y-6">
+          <!-- Nome -->
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-2">
+              Nome do Usuário
+            </label>
+            <input
+              v-model="form.nome"
+              type="text"
+              placeholder="Nome completo"
+              class="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+            />
+          </div>
+
           <!-- Papel -->
           <div>
             <label class="block text-sm font-medium text-foreground mb-2">

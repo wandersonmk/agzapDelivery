@@ -1,6 +1,10 @@
 import { library, config } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
+
+// Prevenir auto-replace de CSS e ícones no SSR
+config.autoAddCss = false
+config.autoReplaceSvg = false
 import { 
   faHome,
   faUsers,
@@ -83,11 +87,7 @@ import {
   faWhatsapp
 } from '@fortawesome/free-brands-svg-icons'
 
-// This is important, we are going to let Nuxt worry about the CSS
-config.autoAddCss = false
-
-// You can add your icons directly in this plugin. See other examples for how you
-// can add other styles or just individual icons.
+// Adicionar todos os ícones à biblioteca
 library.add(
   faHome,
   faUsers,
@@ -167,5 +167,6 @@ library.add(
 )
 
 export default defineNuxtPlugin((nuxtApp) => {
+  nuxtApp.vueApp.component('FontAwesomeIcon', FontAwesomeIcon)
   nuxtApp.vueApp.component('font-awesome-icon', FontAwesomeIcon)
 })

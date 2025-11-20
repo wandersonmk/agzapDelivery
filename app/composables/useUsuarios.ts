@@ -163,11 +163,20 @@ export function useUsuarios() {
   }
 
   /**
-   * Atualiza papel e permissões de um usuário
+   * Atualiza nome, papel e permissões de um usuário
    */
-  async function atualizarUsuario(vinculoId: string, papel: PapelUsuario, permissoes: Permissoes) {
+  async function atualizarUsuario(vinculoId: string, usuarioId: string, nome: string, papel: PapelUsuario, permissoes: Permissoes) {
     try {
-      const { error } = await supabase
+      // Atualizar nome na tabela usuarios
+      const { error: errorUsuario } = await supabase
+        .from('usuarios')
+        .update({ nome })
+        .eq('id', usuarioId)
+
+      if (errorUsuario) throw errorUsuario
+
+      // Atualizar papel e permissões na tabela usuarios_empresas
+      const { error: errorVinculo } = await supabase
         .from('usuarios_empresas')
         .update({
           papel,
@@ -176,7 +185,7 @@ export function useUsuarios() {
         })
         .eq('id', vinculoId)
 
-      if (error) throw error
+      if (errorVinculo) throw errorVinculo
 
       return { success: true }
     } catch (error: any) {

@@ -10,6 +10,7 @@ const usuarios = ref<any[]>([])
 
 // Composables - usar refs para inicialização no onMounted
 const buscarUsuariosEmpresa = ref<any>(null)
+const atualizarUsuario = ref<any>(null)
 const toggleStatusUsuario = ref<any>(null)
 const removerUsuario = ref<any>(null)
 const toastSuccess = ref<any>(null)
@@ -29,6 +30,7 @@ onMounted(async () => {
   // Inicializar composables no cliente
   const usuariosComposable = useUsuarios()
   buscarUsuariosEmpresa.value = usuariosComposable.buscarUsuariosEmpresa
+  atualizarUsuario.value = usuariosComposable.atualizarUsuario
   toggleStatusUsuario.value = usuariosComposable.toggleStatusUsuario
   removerUsuario.value = usuariosComposable.removerUsuario
   
@@ -224,6 +226,36 @@ const excluirUsuario = async (usuario: any) => {
     }
   }
 }
+
+const salvarEdicaoUsuario = async (data: any) => {
+  if (!atualizarUsuario.value || !selectedUsuario.value) return
+  
+  try {
+    const resultado = await atualizarUsuario.value(
+      selectedUsuario.value.id, // ID do vínculo
+      selectedUsuario.value.usuarioId, // ID do usuário
+      data.nome, // Nome atualizado
+      data.papel,
+      data.permissoes // Sempre envia as permissões (personalizadas ou padrão)
+    )
+    
+    if (resultado.success) {
+      await carregarUsuarios()
+      if (toastSuccess.value) {
+        toastSuccess.value('Usuário atualizado com sucesso!')
+      }
+    } else {
+      if (toastError.value) {
+        toastError.value(resultado.message || 'Erro ao atualizar usuário')
+      }
+    }
+  } catch (error: any) {
+    console.error('Erro ao salvar edição:', error)
+    if (toastError.value) {
+      toastError.value('Erro ao atualizar usuário')
+    }
+  }
+}
 </script>
 
 <template>
@@ -331,6 +363,7 @@ const excluirUsuario = async (usuario: any) => {
       :isOpen="isModalEditarUsuarioOpen"
       :usuario="selectedUsuario"
       @close="fecharModais"
+      @salvar="salvarEdicaoUsuario"
     />
 
     <!-- Modal de Link de Convite -->
