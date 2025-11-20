@@ -23,31 +23,56 @@ export default defineEventHandler(async (event) => {
 
     console.log('[generate-invite-link] Gerando link com redirect:', redirectUrl)
 
-    // 1. Tentar criar usuário (se já existir, captura erro e continua)
+    // 1. Verificar se usuário já existe
+    let usuarioId = null
     try {
-      await $fetch<any>(`${supabaseUrl}/auth/v1/admin/users`, {
-        method: 'POST',
+      // Buscar usuário pelo email usando list users
+      const listResponse = await $fetch<any>(`${supabaseUrl}/auth/v1/admin/users`, {
+        method: 'GET',
         headers: {
           'apikey': serviceRoleKey,
-          'Authorization': `Bearer ${serviceRoleKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: {
-          email,
-          email_confirm: false,
-          user_metadata: {
-            nome: nome || ''
-          }
+          'Authorization': `Bearer ${serviceRoleKey}`
         }
       })
-      console.log('[generate-invite-link] Usuário criado com sucesso')
-    } catch (createError: any) {
-      // Ignora qualquer erro - usuário pode já existir
-      const errorMsg = createError.message || createError.data?.message || ''
-      console.log('[generate-invite-link] Usuário pode já existir, continuando...', errorMsg)
+      
+      // Procurar o usuário pelo email
+      const usuarioExistente = listResponse.users?.find((u: any) => u.email === email)
+      
+      if (usuarioExistente) {
+        console.log('[generate-invite-link] Usuário já existe:', usuarioExistente.id)
+        usuarioId = usuarioExistente.id
+      }
+    } catch (error) {
+      console.log('[generate-invite-link] Erro ao buscar usuário, tentando criar...')
     }
 
-    // 2. Gerar token de convite
+    // 2. Criar usuário apenas se não existir
+    if (!usuarioId) {
+      try {
+        const createResponse = await $fetch<any>(`${supabaseUrl}/auth/v1/admin/users`, {
+          method: 'POST',
+          headers: {
+            'apikey': serviceRoleKey,
+            'Authorization': `Bearer ${serviceRoleKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: {
+            email,
+            email_confirm: false,
+            user_metadata: {
+              nome: nome || ''
+            }
+          }
+        })
+        console.log('[generate-invite-link] Usuário criado com sucesso:', createResponse.id)
+        usuarioId = createResponse.id
+      } catch (createError: any) {
+        // Se falhar, tenta gerar link mesmo assim
+        console.log('[generate-invite-link] Erro ao criar usuário, tentando gerar link...')
+      }
+    }
+
+    // 3. Gerar token de convite
     const response = await $fetch<any>(`${supabaseUrl}/auth/v1/admin/generate_link`, {
       method: 'POST',
       headers: {
