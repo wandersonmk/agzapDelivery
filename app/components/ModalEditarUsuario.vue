@@ -13,25 +13,43 @@ const emit = defineEmits<{
   salvar: [data: any]
 }>()
 
-// Estado do formulário
+// Estado do formulário com checkboxes de módulos
 const form = ref({
   nome: '',
   papel: 'atendente' as PapelUsuario,
-  permissoesPersonalizadas: false,
-  permissoes: null as Permissoes | null
+  modulos: {
+    atendimento: false,
+    pedidos: false,
+    cardapio: false,
+    relatorios: false,
+    configuracoes: false
+  }
 })
 
 // Sincronizar com o usuário selecionado
 watch(() => [props.isOpen, props.usuario], ([isOpen, usuario]) => {
   if (isOpen && usuario) {
+    // Detectar quais módulos estão ativos baseado nas permissões do papel
+    const permissoesPadrao = PERMISSOES_PADRAO[usuario.papel as PapelUsuario]
+    
     form.value = {
       nome: usuario.nome || '',
       papel: usuario.papel,
-      permissoesPersonalizadas: false,
-      permissoes: PERMISSOES_PADRAO[usuario.papel as PapelUsuario]
+      modulos: {
+        atendimento: permissoesPadrao.pedidos.visualizar && permissoesPadrao.pedidos.alterar_status && !permissoesPadrao.pedidos.criar,
+        pedidos: temAlgumaPermissaoModulo(permissoesPadrao.pedidos) && permissoesPadrao.pedidos.criar,
+        cardapio: temAlgumaPermissaoModulo(permissoesPadrao.cardapio),
+        relatorios: temAlgumaPermissaoModulo(permissoesPadrao.relatorios),
+        configuracoes: temAlgumaPermissaoModulo(permissoesPadrao.configuracoes)
+      }
     }
   }
 }, { immediate: true })
+
+// Verifica se um módulo tem alguma permissão ativa
+const temAlgumaPermissaoModulo = (modulo: any): boolean => {
+  return Object.values(modulo).some(valor => valor === true)
+}
 
 // Lista de papéis disponíveis
 const papeisDisponiveis = computed(() => {
@@ -54,44 +72,90 @@ const descricaoPapel = computed(() => {
   return descricoes[form.value.papel]
 })
 
-// Permissões ativas (padrão ou personalizadas)
-const permissoesAtivas = computed(() => {
-  if (form.value.permissoesPersonalizadas && form.value.permissoes) {
-    return form.value.permissoes
+// Construir permissões baseado nos módulos selecionados
+const permissoesFinais = computed((): Permissoes => {
+  return {
+    pedidos: form.value.modulos.pedidos ? {
+      criar: true,
+      editar: true,
+      excluir: true,
+      visualizar: true,
+      alterar_status: true
+    } : form.value.modulos.atendimento ? {
+      criar: false,
+      editar: false,
+      excluir: false,
+      visualizar: true,
+      alterar_status: true
+    } : {
+      criar: false,
+      editar: false,
+      excluir: false,
+      visualizar: false,
+      alterar_status: false
+    },
+    cardapio: form.value.modulos.cardapio ? {
+      criar_produto: true,
+      editar_produto: true,
+      excluir_produto: true,
+      ativar_desativar: true
+    } : {
+      criar_produto: false,
+      editar_produto: false,
+      excluir_produto: false,
+      ativar_desativar: false
+    },
+    relatorios: form.value.modulos.relatorios ? {
+      visualizar: true,
+      exportar: true
+    } : {
+      visualizar: false,
+      exportar: false
+    },
+    configuracoes: form.value.modulos.configuracoes ? {
+      editar_empresa: true,
+      gerenciar_usuarios: true
+    } : {
+      editar_empresa: false,
+      gerenciar_usuarios: false
+    }
   }
-  return PERMISSOES_PADRAO[form.value.papel]
 })
 
-// Atualizar permissões ao mudar papel (se não estiver personalizado)
+// Atualizar módulos ao mudar papel
 watch(() => form.value.papel, (novoPapel) => {
-  if (!form.value.permissoesPersonalizadas) {
-    form.value.permissoes = PERMISSOES_PADRAO[novoPapel]
+  const permissoesPadrao = PERMISSOES_PADRAO[novoPapel]
+  form.value.modulos = {
+    atendimento: permissoesPadrao.pedidos.visualizar && permissoesPadrao.pedidos.alterar_status && !permissoesPadrao.pedidos.criar,
+    pedidos: temAlgumaPermissaoModulo(permissoesPadrao.pedidos) && permissoesPadrao.pedidos.criar,
+    cardapio: temAlgumaPermissaoModulo(permissoesPadrao.cardapio),
+    relatorios: temAlgumaPermissaoModulo(permissoesPadrao.relatorios),
+    configuracoes: temAlgumaPermissaoModulo(permissoesPadrao.configuracoes)
   }
 })
 
-// Habilitar modo personalizado
-const habilitarPersonalizacao = () => {
-  form.value.permissoesPersonalizadas = true
-  form.value.permissoes = { ...PERMISSOES_PADRAO[form.value.papel] }
+// Funções para garantir exclusividade entre Atendimento e Pedidos
+const toggleAtendimento = () => {
+  if (form.value.modulos.atendimento) {
+    form.value.modulos.pedidos = false
+  }
 }
 
-// Resetar para padrão
-const resetarParaPadrao = () => {
-  form.value.permissoesPersonalizadas = false
-  form.value.permissoes = PERMISSOES_PADRAO[form.value.papel]
+const togglePedidos = () => {
+  if (form.value.modulos.pedidos) {
+    form.value.modulos.atendimento = false
+  }
 }
 
 const salvar = () => {
   console.log('Salvar alterações:', form.value)
+  console.log('Permissões finais:', permissoesFinais.value)
   
   // Preparar dados para envio
   const dataToSave = {
     nome: form.value.nome,
     papel: form.value.papel,
-    permissoes: form.value.permissoesPersonalizadas 
-      ? form.value.permissoes 
-      : PERMISSOES_PADRAO[form.value.papel],
-    permissoesPersonalizadas: form.value.permissoesPersonalizadas
+    permissoes: permissoesFinais.value
   }
   
   emit('salvar', dataToSave)
@@ -160,248 +224,75 @@ const salvar = () => {
             </p>
           </div>
 
-          <!-- Toggle de permissões personalizadas -->
-          <div class="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-            <div>
-              <p class="text-sm font-medium text-foreground">Permissões Personalizadas</p>
-              <p class="text-xs text-muted-foreground mt-1">
-                Personalize as permissões específicas deste usuário
-              </p>
-            </div>
-            <button
-              v-if="!form.permissoesPersonalizadas"
-              @click="habilitarPersonalizacao"
-              class="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
-            >
-              Personalizar
-            </button>
-            <button
-              v-else
-              @click="resetarParaPadrao"
-              class="px-4 py-2 bg-muted text-foreground rounded-lg text-sm font-medium hover:bg-muted/80 transition-colors"
-            >
-              Resetar
-            </button>
-          </div>
-
-          <!-- Visualização das permissões -->
+          <!-- Seleção de Módulos -->
           <div class="bg-muted/50 rounded-lg p-4">
-            <h3 class="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+            <h3 class="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
               <font-awesome-icon icon="lock" class="text-xs" />
-              Permissões {{ form.permissoesPersonalizadas ? 'Personalizadas' : `do ${PAPEL_LABELS[form.papel]}` }}
+              Módulos de Acesso
             </h3>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <!-- Pedidos -->
-              <div>
-                <p class="text-xs font-medium text-foreground mb-2">Pedidos</p>
-                <div class="space-y-1">
-                  <label class="flex items-center gap-2 text-xs cursor-pointer">
-                    <input
-                      v-if="form.permissoesPersonalizadas && form.permissoes"
-                      v-model="form.permissoes.pedidos.criar"
-                      type="checkbox"
-                      class="rounded border-border"
-                    />
-                    <font-awesome-icon
-                      v-else
-                      :icon="permissoesAtivas.pedidos.criar ? 'check' : 'times'"
-                      :class="permissoesAtivas.pedidos.criar ? 'text-green-600' : 'text-red-600'"
-                    />
-                    <span class="text-muted-foreground">Criar</span>
-                  </label>
-                  <label class="flex items-center gap-2 text-xs cursor-pointer">
-                    <input
-                      v-if="form.permissoesPersonalizadas && form.permissoes"
-                      v-model="form.permissoes.pedidos.editar"
-                      type="checkbox"
-                      class="rounded border-border"
-                    />
-                    <font-awesome-icon
-                      v-else
-                      :icon="permissoesAtivas.pedidos.editar ? 'check' : 'times'"
-                      :class="permissoesAtivas.pedidos.editar ? 'text-green-600' : 'text-red-600'"
-                    />
-                    <span class="text-muted-foreground">Editar</span>
-                  </label>
-                  <label class="flex items-center gap-2 text-xs cursor-pointer">
-                    <input
-                      v-if="form.permissoesPersonalizadas && form.permissoes"
-                      v-model="form.permissoes.pedidos.excluir"
-                      type="checkbox"
-                      class="rounded border-border"
-                    />
-                    <font-awesome-icon
-                      v-else
-                      :icon="permissoesAtivas.pedidos.excluir ? 'check' : 'times'"
-                      :class="permissoesAtivas.pedidos.excluir ? 'text-green-600' : 'text-red-600'"
-                    />
-                    <span class="text-muted-foreground">Excluir</span>
-                  </label>
-                  <label class="flex items-center gap-2 text-xs cursor-pointer">
-                    <input
-                      v-if="form.permissoesPersonalizadas && form.permissoes"
-                      v-model="form.permissoes.pedidos.visualizar"
-                      type="checkbox"
-                      class="rounded border-border"
-                    />
-                    <font-awesome-icon
-                      v-else
-                      :icon="permissoesAtivas.pedidos.visualizar ? 'check' : 'times'"
-                      :class="permissoesAtivas.pedidos.visualizar ? 'text-green-600' : 'text-red-600'"
-                    />
-                    <span class="text-muted-foreground">Visualizar</span>
-                  </label>
-                  <label class="flex items-center gap-2 text-xs cursor-pointer">
-                    <input
-                      v-if="form.permissoesPersonalizadas && form.permissoes"
-                      v-model="form.permissoes.pedidos.alterar_status"
-                      type="checkbox"
-                      class="rounded border-border"
-                    />
-                    <font-awesome-icon
-                      v-else
-                      :icon="permissoesAtivas.pedidos.alterar_status ? 'check' : 'times'"
-                      :class="permissoesAtivas.pedidos.alterar_status ? 'text-green-600' : 'text-red-600'"
-                    />
-                    <span class="text-muted-foreground">Alterar Status</span>
-                  </label>
-                </div>
-              </div>
+              <div class="space-y-3">
+                <label class="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border hover:border-primary/50 cursor-pointer transition-colors">
+                  <input
+                    v-model="form.modulos.atendimento"
+                    type="checkbox"
+                    class="mt-1 rounded border-border"
+                    @change="toggleAtendimento"
+                  />
+                  <div class="flex-1">
+                    <p class="font-medium text-sm text-foreground mb-1">👁️ Atendimento</p>
+                    <p class="text-xs text-muted-foreground">Apenas visualizar pedidos e alterar status (sem criar, editar ou excluir)</p>
+                  </div>
+                </label>
 
-              <!-- Cardápio -->
-              <div>
-                <p class="text-xs font-medium text-foreground mb-2">Cardápio</p>
-                <div class="space-y-1">
-                  <label class="flex items-center gap-2 text-xs cursor-pointer">
-                    <input
-                      v-if="form.permissoesPersonalizadas && form.permissoes"
-                      v-model="form.permissoes.cardapio.criar_produto"
-                      type="checkbox"
-                      class="rounded border-border"
-                    />
-                    <font-awesome-icon
-                      v-else
-                      :icon="permissoesAtivas.cardapio.criar_produto ? 'check' : 'times'"
-                      :class="permissoesAtivas.cardapio.criar_produto ? 'text-green-600' : 'text-red-600'"
-                    />
-                    <span class="text-muted-foreground">Criar Produto</span>
-                  </label>
-                  <label class="flex items-center gap-2 text-xs cursor-pointer">
-                    <input
-                      v-if="form.permissoesPersonalizadas && form.permissoes"
-                      v-model="form.permissoes.cardapio.editar_produto"
-                      type="checkbox"
-                      class="rounded border-border"
-                    />
-                    <font-awesome-icon
-                      v-else
-                      :icon="permissoesAtivas.cardapio.editar_produto ? 'check' : 'times'"
-                      :class="permissoesAtivas.cardapio.editar_produto ? 'text-green-600' : 'text-red-600'"
-                    />
-                    <span class="text-muted-foreground">Editar Produto</span>
-                  </label>
-                  <label class="flex items-center gap-2 text-xs cursor-pointer">
-                    <input
-                      v-if="form.permissoesPersonalizadas && form.permissoes"
-                      v-model="form.permissoes.cardapio.excluir_produto"
-                      type="checkbox"
-                      class="rounded border-border"
-                    />
-                    <font-awesome-icon
-                      v-else
-                      :icon="permissoesAtivas.cardapio.excluir_produto ? 'check' : 'times'"
-                      :class="permissoesAtivas.cardapio.excluir_produto ? 'text-green-600' : 'text-red-600'"
-                    />
-                    <span class="text-muted-foreground">Excluir Produto</span>
-                  </label>
-                  <label class="flex items-center gap-2 text-xs cursor-pointer">
-                    <input
-                      v-if="form.permissoesPersonalizadas && form.permissoes"
-                      v-model="form.permissoes.cardapio.ativar_desativar"
-                      type="checkbox"
-                      class="rounded border-border"
-                    />
-                    <font-awesome-icon
-                      v-else
-                      :icon="permissoesAtivas.cardapio.ativar_desativar ? 'check' : 'times'"
-                      :class="permissoesAtivas.cardapio.ativar_desativar ? 'text-green-600' : 'text-red-600'"
-                    />
-                    <span class="text-muted-foreground">Ativar/Desativar</span>
-                  </label>
-                </div>
-              </div>
+                <label class="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border hover:border-primary/50 cursor-pointer transition-colors">
+                  <input
+                    v-model="form.modulos.pedidos"
+                    type="checkbox"
+                    class="mt-1 rounded border-border"
+                    @change="togglePedidos"
+                  />
+                  <div class="flex-1">
+                    <p class="font-medium text-sm text-foreground mb-1">📦 Pedidos Completo</p>
+                    <p class="text-xs text-muted-foreground">Criar, editar, excluir, visualizar e alterar status de pedidos</p>
+                  </div>
+                </label>
 
-              <!-- Relatórios -->
-              <div>
-                <p class="text-xs font-medium text-foreground mb-2">Relatórios</p>
-                <div class="space-y-1">
-                  <label class="flex items-center gap-2 text-xs cursor-pointer">
-                    <input
-                      v-if="form.permissoesPersonalizadas && form.permissoes"
-                      v-model="form.permissoes.relatorios.visualizar"
-                      type="checkbox"
-                      class="rounded border-border"
-                    />
-                    <font-awesome-icon
-                      v-else
-                      :icon="permissoesAtivas.relatorios.visualizar ? 'check' : 'times'"
-                      :class="permissoesAtivas.relatorios.visualizar ? 'text-green-600' : 'text-red-600'"
-                    />
-                    <span class="text-muted-foreground">Visualizar</span>
-                  </label>
-                  <label class="flex items-center gap-2 text-xs cursor-pointer">
-                    <input
-                      v-if="form.permissoesPersonalizadas && form.permissoes"
-                      v-model="form.permissoes.relatorios.exportar"
-                      type="checkbox"
-                      class="rounded border-border"
-                    />
-                    <font-awesome-icon
-                      v-else
-                      :icon="permissoesAtivas.relatorios.exportar ? 'check' : 'times'"
-                      :class="permissoesAtivas.relatorios.exportar ? 'text-green-600' : 'text-red-600'"
-                    />
-                    <span class="text-muted-foreground">Exportar</span>
-                  </label>
-                </div>
-              </div>
+                <label class="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border hover:border-primary/50 cursor-pointer transition-colors">
+                  <input
+                    v-model="form.modulos.cardapio"
+                    type="checkbox"
+                    class="mt-1 rounded border-border"
+                  />
+                  <div class="flex-1">
+                    <p class="font-medium text-sm text-foreground mb-1">🍕 Cardápio</p>
+                    <p class="text-xs text-muted-foreground">Criar, editar, excluir e ativar/desativar produtos</p>
+                  </div>
+                </label>
 
-              <!-- Configurações -->
-              <div>
-                <p class="text-xs font-medium text-foreground mb-2">Configurações</p>
-                <div class="space-y-1">
-                  <label class="flex items-center gap-2 text-xs cursor-pointer">
-                    <input
-                      v-if="form.permissoesPersonalizadas && form.permissoes"
-                      v-model="form.permissoes.configuracoes.editar_empresa"
-                      type="checkbox"
-                      class="rounded border-border"
-                    />
-                    <font-awesome-icon
-                      v-else
-                      :icon="permissoesAtivas.configuracoes.editar_empresa ? 'check' : 'times'"
-                      :class="permissoesAtivas.configuracoes.editar_empresa ? 'text-green-600' : 'text-red-600'"
-                    />
-                    <span class="text-muted-foreground">Editar Empresa</span>
-                  </label>
-                  <label class="flex items-center gap-2 text-xs cursor-pointer">
-                    <input
-                      v-if="form.permissoesPersonalizadas && form.permissoes"
-                      v-model="form.permissoes.configuracoes.gerenciar_usuarios"
-                      type="checkbox"
-                      class="rounded border-border"
-                    />
-                    <font-awesome-icon
-                      v-else
-                      :icon="permissoesAtivas.configuracoes.gerenciar_usuarios ? 'check' : 'times'"
-                      :class="permissoesAtivas.configuracoes.gerenciar_usuarios ? 'text-green-600' : 'text-red-600'"
-                    />
-                    <span class="text-muted-foreground">Gerenciar Usuários</span>
-                  </label>
-                </div>
+                <label class="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border hover:border-primary/50 cursor-pointer transition-colors">
+                  <input
+                    v-model="form.modulos.relatorios"
+                    type="checkbox"
+                    class="mt-1 rounded border-border"
+                  />
+                  <div class="flex-1">
+                    <p class="font-medium text-sm text-foreground mb-1">📊 Relatórios</p>
+                    <p class="text-xs text-muted-foreground">Visualizar e exportar relatórios</p>
+                  </div>
+                </label>
+
+                <label class="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border hover:border-primary/50 cursor-pointer transition-colors">
+                  <input
+                    v-model="form.modulos.configuracoes"
+                    type="checkbox"
+                    class="mt-1 rounded border-border"
+                  />
+                  <div class="flex-1">
+                    <p class="font-medium text-sm text-foreground mb-1">⚙️ Configurações</p>
+                    <p class="text-xs text-muted-foreground">Editar empresa e gerenciar usuários</p>
+                  </div>
+                </label>
               </div>
-            </div>
           </div>
         </div>
 
