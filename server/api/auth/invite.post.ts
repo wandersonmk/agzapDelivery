@@ -2,12 +2,19 @@ export default defineEventHandler(async (event) => {
   try {
     // Ler body da requisição
     const body = await readBody(event)
-    const { email } = body
+    const { email, name } = body
 
     if (!email) {
       throw createError({
         statusCode: 400,
         statusMessage: 'Email é obrigatório'
+      })
+    }
+
+    if (!name) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Nome é obrigatório'
       })
     }
 
@@ -46,6 +53,7 @@ export default defineEventHandler(async (event) => {
       body: {
         email,
         data: {
+          name: name,
           email_confirm: true,
           redirect_to: redirectTo
         }

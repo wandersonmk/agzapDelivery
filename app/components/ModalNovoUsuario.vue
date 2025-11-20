@@ -18,6 +18,7 @@ const toast = await useToastSafe()
 
 // Estado do formulário
 const form = ref({
+  nome: '',
   email: '',
   papel: 'atendente' as PapelUsuario,
   permissoesPersonalizadas: false
@@ -30,6 +31,7 @@ const erro = ref('')
 watch(() => props.isOpen, (isOpen) => {
   if (!isOpen) {
     form.value = {
+      nome: '',
       email: '',
       papel: 'atendente',
       permissoesPersonalizadas: false
@@ -67,6 +69,11 @@ const permissoesPapel = computed(() => {
 
 const salvar = async () => {
   // Validação
+  if (!form.value.nome || form.value.nome.trim().length < 3) {
+    erro.value = 'Por favor, informe o nome completo (mínimo 3 caracteres)'
+    return
+  }
+  
   if (!form.value.email || !form.value.email.includes('@')) {
     erro.value = 'Por favor, informe um email válido'
     return
@@ -77,6 +84,7 @@ const salvar = async () => {
 
   try {
     console.log('[ModalNovoUsuario] Enviando convite com dados:', {
+      nome: form.value.nome,
       email: form.value.email,
       papel: form.value.papel,
       permissoes: permissoesPapel.value
@@ -84,6 +92,7 @@ const salvar = async () => {
 
     // Enviar convite com permissões configuradas
     const resultado = await enviarConvite({
+      nome: form.value.nome,
       email: form.value.email,
       papel: form.value.papel,
       permissoes: permissoesPapel.value
@@ -148,6 +157,24 @@ const salvar = async () => {
                 <p class="text-xs text-red-700 dark:text-red-300 mt-1">{{ erro }}</p>
               </div>
             </div>
+          </div>
+
+          <!-- Nome -->
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-2">
+              Nome Completo <span class="text-red-500">*</span>
+            </label>
+            <input
+              v-model="form.nome"
+              type="text"
+              placeholder="Ex: João Silva"
+              class="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+              :disabled="salvando"
+              required
+            />
+            <p class="text-xs text-muted-foreground mt-1">
+              Nome que aparecerá no sistema
+            </p>
           </div>
 
           <!-- Email -->
@@ -318,7 +345,7 @@ const salvar = async () => {
           </AppButton>
           <AppButton 
             @click="salvar"
-            :disabled="salvando || !form.email"
+            :disabled="salvando || !form.nome || !form.email"
           >
             <font-awesome-icon 
               :icon="salvando ? 'spinner' : 'paper-plane'" 

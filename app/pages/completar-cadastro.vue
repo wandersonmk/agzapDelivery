@@ -101,12 +101,17 @@ const completarCadastro = async () => {
     }
 
     console.log('[completar-cadastro] Usuário autenticado:', user.id)
+    console.log('[completar-cadastro] User metadata:', user.user_metadata)
+
+    // Obter nome do metadata ou usar email como fallback
+    const nomeUsuario = user.user_metadata?.name || user.email?.split('@')[0] || 'Usuário'
+    console.log('[completar-cadastro] Nome do usuário:', nomeUsuario)
 
     // Atualizar nome na tabela usuarios (caso não tenha)
     const { error: updateUsuarioError } = await supabase
       .from('usuarios')
       .update({ 
-        nome: user.email?.split('@')[0] || 'Usuário',
+        nome: nomeUsuario,
         updated_at: new Date().toISOString()
       })
       .eq('id', user.id)

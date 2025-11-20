@@ -2,6 +2,7 @@ import type { PapelUsuario, Permissoes } from '@shared/types/usuarios-empresas.t
 import { PERMISSOES_PADRAO } from '@shared/types/usuarios-empresas.types'
 
 interface ConviteUsuarioData {
+  nome: string
   email: string
   papel: PapelUsuario
   permissoes: Permissoes
@@ -23,7 +24,8 @@ export function useUsuarios() {
         await $fetch('/api/auth/invite', {
           method: 'POST',
           body: {
-            email: data.email
+            email: data.email,
+            name: data.nome
           }
         })
         console.log('[useUsuarios] Convite enviado com sucesso')
@@ -51,7 +53,7 @@ export function useUsuarios() {
           .from('usuarios')
           .insert({
             email: data.email,
-            nome: data.email.split('@')[0], // Nome temporário
+            nome: data.nome, // Nome fornecido pelo admin
             foto: null
           })
           .select()
