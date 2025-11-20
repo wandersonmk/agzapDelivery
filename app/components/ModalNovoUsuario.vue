@@ -28,6 +28,7 @@ onMounted(async () => {
 const form = ref({
   nome: '',
   email: '',
+  senha: '',
   papel: 'atendente' as PapelUsuario,
   permissoesPersonalizadas: false
 })
@@ -41,6 +42,7 @@ watch(() => props.isOpen, (isOpen) => {
     form.value = {
       nome: '',
       email: '',
+      senha: '',
       papel: 'atendente',
       permissoesPersonalizadas: false
     }
@@ -76,12 +78,6 @@ const permissoesPapel = computed(() => {
 })
 
 const salvar = async () => {
-  // Validar se composables foram inicializados
-  if (!enviarConvite.value) {
-    erro.value = 'Sistema ainda não foi inicializado. Aguarde um momento.'
-    return
-  }
-
   // Validação
   if (!form.value.nome || form.value.nome.trim().length < 3) {
     erro.value = 'Por favor, informe o nome completo (mínimo 3 caracteres)'
@@ -93,53 +89,54 @@ const salvar = async () => {
     return
   }
 
+  if (!form.value.senha || form.value.senha.length < 6) {
+    erro.value = 'A senha deve ter no mínimo 6 caracteres'
+    return
+  }
+
   erro.value = ''
   salvando.value = true
 
   try {
-    console.log('[ModalNovoUsuario] Enviando convite com dados:', {
+    console.log('[ModalNovoUsuario] Criando usuário com dados:', {
       nome: form.value.nome,
       email: form.value.email,
       papel: form.value.papel,
       permissoes: permissoesPapel.value
     })
 
-    // Enviar convite com permissões configuradas
-    const resultado = await enviarConvite.value({
-      nome: form.value.nome,
-      email: form.value.email,
-      papel: form.value.papel,
-      permissoes: permissoesPapel.value
+    // Criar usuário direto
+    const response = await $fetch('/api/auth/create-user-direct', {
+      method: 'POST',
+      body: {
+        nome: form.value.nome,
+        email: form.value.email,
+        senha: form.value.senha,
+        papel: form.value.papel,
+        permissoes: permissoesPapel.value
+      }
     })
 
-    if (resultado.success) {
-      // Fechar modal primeiro
+    if (response.success) {
+      // Fechar modal
       emit('close')
       
-      // Aguardar um pouco para o modal fechar antes de abrir o próximo
-      await new Promise(resolve => setTimeout(resolve, 100))
-      
-      // Se retornou link, emite evento para mostrar modal de link
-      if (resultado.link) {
-        emit('conviteEnviado', resultado.link)
-      } else {
-        // Fallback se não houver link (email enviado normalmente)
-        if (toast.value) {
-          toast.value.success(`Convite enviado para ${form.value.email}!`)
-        }
-        emit('usuarioCriado')
-      }
-    } else {
-      erro.value = resultado.message
       if (toast.value) {
-        toast.value.error(resultado.message)
+        toast.value.success(`Usuário criado! Email: ${form.value.email} | Senha: ${form.value.senha}`)
+      }
+      
+      emit('usuarioCriado')
+    } else {
+      erro.value = response.message || 'Erro ao criar usuário'
+      if (toast.value) {
+        toast.value.error(erro.value)
       }
     }
   } catch (error: any) {
-    console.error('[ModalNovoUsuario] Erro ao enviar convite:', error)
-    erro.value = error.message || 'Erro ao enviar convite'
+    console.error('[ModalNovoUsuario] Erro ao criar usuário:', error)
+    erro.value = error.message || error.data?.message || 'Erro ao criar usuário'
     if (toast.value) {
-      toast.value.error('Erro ao enviar convite')
+      toast.value.error(erro.value)
     }
   } finally {
     salvando.value = false
@@ -216,7 +213,25 @@ const salvar = async () => {
               required
             />
             <p class="text-xs text-muted-foreground mt-1">
-              Um convite será enviado para este email
+              Email para acesso ao sistema
+            </p>
+          </div>
+
+          <!-- Senha Provisória -->
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-2">
+              Senha Provisória <span class="text-red-500">*</span>
+            </label>
+            <input
+              v-model="form.senha"
+              type="text"
+              placeholder="Mínimo 6 caracteres"
+              class="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+              :disabled="salvando"
+              required
+            />
+            <p class="text-xs text-muted-foreground mt-1">
+              O usuário poderá alterar após o primeiro login
             </p>
           </div>
 
