@@ -13,9 +13,16 @@ const emit = defineEmits<{
   conviteEnviado: [link: string]
 }>()
 
-// Composables
-const { enviarConvite } = useUsuarios()
-const toast = await useToastSafe()
+// Composables (inicializados no cliente)
+const enviarConvite = ref<any>(null)
+const toast = ref<any>(null)
+
+// Inicializar composables apenas no cliente
+onMounted(async () => {
+  const usuariosComposable = useUsuarios()
+  enviarConvite.value = usuariosComposable.enviarConvite
+  toast.value = await useToastSafe()
+})
 
 // Estado do formulário
 const form = ref({
@@ -69,6 +76,12 @@ const permissoesPapel = computed(() => {
 })
 
 const salvar = async () => {
+  // Validar se composables foram inicializados
+  if (!enviarConvite.value) {
+    erro.value = 'Sistema ainda não foi inicializado. Aguarde um momento.'
+    return
+  }
+
   // Validação
   if (!form.value.nome || form.value.nome.trim().length < 3) {
     erro.value = 'Por favor, informe o nome completo (mínimo 3 caracteres)'
@@ -92,7 +105,7 @@ const salvar = async () => {
     })
 
     // Enviar convite com permissões configuradas
-    const resultado = await enviarConvite({
+    const resultado = await enviarConvite.value({
       nome: form.value.nome,
       email: form.value.email,
       papel: form.value.papel,
@@ -105,23 +118,23 @@ const salvar = async () => {
         emit('conviteEnviado', resultado.link)
       } else {
         // Fallback se não houver link (email enviado normalmente)
-        if (toast) {
-          toast.success(`Convite enviado para ${form.value.email}!`)
+        if (toast.value) {
+          toast.value.success(`Convite enviado para ${form.value.email}!`)
         }
         emit('usuarioCriado')
       }
       emit('close')
     } else {
       erro.value = resultado.message
-      if (toast) {
-        toast.error(resultado.message)
+      if (toast.value) {
+        toast.value.error(resultado.message)
       }
     }
   } catch (error: any) {
     console.error('[ModalNovoUsuario] Erro ao enviar convite:', error)
     erro.value = error.message || 'Erro ao enviar convite'
-    if (toast) {
-      toast.error('Erro ao enviar convite')
+    if (toast.value) {
+      toast.value.error('Erro ao enviar convite')
     }
   } finally {
     salvando.value = false
@@ -333,8 +346,9 @@ const salvar = async () => {
               <div class="text-sm text-blue-900 dark:text-blue-100">
                 <p class="font-medium mb-1">Como funciona o convite?</p>
                 <p class="text-xs text-blue-700 dark:text-blue-300">
-                  Um email será enviado para o usuário com um link de cadastro. Após criar a conta, 
-                  ele terá acesso à empresa com as permissões definidas.
+                  Um link de cadastro será gerado e <strong>copiado automaticamente</strong> para você compartilhar 
+                  com o usuário (via WhatsApp, Telegram, etc). Após criar a senha, ele terá acesso à empresa 
+                  com as permissões definidas.
                 </p>
               </div>
             </div>

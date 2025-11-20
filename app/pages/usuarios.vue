@@ -20,6 +20,10 @@ const isModalNovoUsuarioOpen = ref(false)
 const isModalEditarUsuarioOpen = ref(false)
 const selectedUsuario = ref<any>(null)
 
+// Estado para modal de link de convite
+const isModalLinkConviteOpen = ref(false)
+const linkConvite = ref('')
+
 // Buscar usuários ao montar o componente (apenas no cliente)
 onMounted(async () => {
   // Inicializar composables no cliente
@@ -128,24 +132,30 @@ const onConviteEnviado = async (link: string) => {
   // Recarregar lista de usuários
   await carregarUsuarios()
   
-  // Copiar link automaticamente
+  // Mostrar modal com link
+  linkConvite.value = link
+  isModalLinkConviteOpen.value = true
+}
+
+const copiarLink = async () => {
   if (navigator.clipboard) {
     try {
-      await navigator.clipboard.writeText(link)
+      await navigator.clipboard.writeText(linkConvite.value)
       if (toastSuccess.value) {
-        toastSuccess.value('Link de convite copiado! Compartilhe com o usuário.')
+        toastSuccess.value('Link copiado! Compartilhe com o usuário.')
       }
     } catch (err) {
       console.error('Erro ao copiar link:', err)
-      if (toastSuccess.value) {
-        toastSuccess.value('Convite enviado! Link: ' + link)
+      if (toastError.value) {
+        toastError.value('Erro ao copiar. Copie manualmente.')
       }
     }
-  } else {
-    if (toastSuccess.value) {
-      toastSuccess.value('Convite enviado! Link: ' + link)
-    }
   }
+}
+
+const fecharModalLink = () => {
+  isModalLinkConviteOpen.value = false
+  linkConvite.value = ''
 }
 
 const toggleStatus = async (usuario: any) => {
@@ -293,5 +303,119 @@ const excluirUsuario = async (usuario: any) => {
       :usuario="selectedUsuario"
       @close="fecharModais"
     />
+
+    <!-- Modal de Link de Convite -->
+    <Teleport to="body">
+      <div
+        v-if="isModalLinkConviteOpen"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        @click.self="fecharModalLink"
+      >
+        <div class="bg-card border border-border rounded-xl shadow-2xl max-w-2xl w-full animate-in fade-in zoom-in duration-200">
+          <!-- Header -->
+          <div class="flex items-center justify-between px-6 py-4 border-b border-border">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center">
+                <font-awesome-icon icon="check" class="text-green-600 text-lg" />
+              </div>
+              <div>
+                <h2 class="text-lg font-semibold text-foreground">Convite Criado com Sucesso!</h2>
+                <p class="text-sm text-muted-foreground">Compartilhe este link com o usuário</p>
+              </div>
+            </div>
+            <button
+              @click="fecharModalLink"
+              class="w-8 h-8 rounded-lg hover:bg-muted transition-colors flex items-center justify-center text-muted-foreground hover:text-foreground"
+            >
+              <font-awesome-icon icon="times" />
+            </button>
+          </div>
+
+          <!-- Body -->
+          <div class="p-6 space-y-4">
+            <!-- Instruções -->
+            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <div class="flex gap-3">
+                <font-awesome-icon icon="info-circle" class="text-blue-600 dark:text-blue-400 mt-0.5" />
+                <div class="text-sm text-blue-900 dark:text-blue-100">
+                  <p class="font-medium mb-1">Como compartilhar?</p>
+                  <p class="text-xs text-blue-700 dark:text-blue-300">
+                    Copie o link abaixo e envie para o usuário via WhatsApp, Telegram, Email ou outra forma de comunicação. 
+                    Ao acessar o link, ele poderá criar a senha e terá acesso imediato ao sistema.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Link -->
+            <div>
+              <label class="block text-sm font-medium text-foreground mb-2">
+                Link de Convite
+              </label>
+              <div class="flex gap-2">
+                <input
+                  type="text"
+                  :value="linkConvite"
+                  readonly
+                  class="flex-1 px-4 py-3 border border-border rounded-lg bg-muted/50 text-foreground font-mono text-sm"
+                  @click="($event.target as HTMLInputElement).select()"
+                />
+                <AppButton
+                  @click="copiarLink"
+                  class="px-6"
+                >
+                  <font-awesome-icon icon="copy" class="mr-2" />
+                  Copiar
+                </AppButton>
+              </div>
+              <p class="text-xs text-muted-foreground mt-2">
+                <font-awesome-icon icon="clock" class="mr-1" />
+                Este link é válido por 24 horas
+              </p>
+            </div>
+
+            <!-- Ações rápidas -->
+            <div class="border-t border-border pt-4">
+              <p class="text-sm font-medium text-foreground mb-3">Compartilhar via:</p>
+              <div class="flex gap-2">
+                <a
+                  :href="`https://wa.me/?text=${encodeURIComponent('Olá! Você foi convidado para acessar nosso sistema. Use este link para criar sua conta: ' + linkConvite)}`"
+                  target="_blank"
+                  class="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors text-sm"
+                >
+                  <font-awesome-icon :icon="['fab', 'whatsapp']" />
+                  WhatsApp
+                </a>
+                <a
+                  :href="`https://t.me/share/url?url=${encodeURIComponent(linkConvite)}&text=${encodeURIComponent('Você foi convidado para acessar nosso sistema')}`"
+                  target="_blank"
+                  class="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors text-sm"
+                >
+                  <font-awesome-icon :icon="['fab', 'telegram']" />
+                  Telegram
+                </a>
+                <a
+                  :href="`mailto:?subject=${encodeURIComponent('Convite - Sistema')}&body=${encodeURIComponent('Olá! Você foi convidado para acessar nosso sistema.\n\nUse este link para criar sua conta:\n' + linkConvite)}`"
+                  class="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-700 text-white transition-colors text-sm"
+                >
+                  <font-awesome-icon icon="envelope" />
+                  Email
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="sticky bottom-0 bg-card border-t border-border px-6 py-4 flex items-center justify-end">
+            <AppButton
+              variant="outline"
+              @click="fecharModalLink"
+            >
+              Fechar
+            </AppButton>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
