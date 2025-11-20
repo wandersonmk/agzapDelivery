@@ -35,26 +35,28 @@ export default defineEventHandler(async (event) => {
 
     console.log('[create-user] Usuário criado:', response.id)
 
-    // Agora criar registro na tabela usuarios SEM acionar trigger
-    // Usando função RPC para desabilitar trigger temporariamente
-    const supabase = useSupabaseServerClient(event)
-    
-    const { error: insertError } = await supabase
-      .from('usuarios')
-      .insert({
+    // Agora criar registro na tabela usuarios usando API direta
+    const insertResponse = await $fetch<any>(`${supabaseUrl}/rest/v1/usuarios`, {
+      method: 'POST',
+      headers: {
+        'apikey': serviceRoleKey,
+        'Authorization': `Bearer ${serviceRoleKey}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: {
         id: response.id, // Usar mesmo ID do Auth
         email: email,
         nome: name,
         foto: null
-      })
-
-    if (insertError) {
-      console.error('[create-user] Erro ao inserir na tabela usuarios:', insertError)
-      // Não falha se usuário já existir
-      if (!insertError.message.includes('duplicate')) {
-        throw insertError
       }
-    }
+    }).catch((error) => {
+      console.error('[create-user] Erro ao inserir na tabela usuarios:', error)
+      // Ignora erro de duplicação
+      if (error.statusCode !== 409) {
+        throw error
+      }
+    })
 
     return {
       success: true,
