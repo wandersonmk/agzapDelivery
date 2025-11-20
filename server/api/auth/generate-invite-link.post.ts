@@ -19,7 +19,8 @@ export default defineEventHandler(async (event) => {
     const host = headers.host || 'localhost:3000'
     const protocol = headers['x-forwarded-proto'] || (host.includes('localhost') ? 'http' : 'https')
     const baseUrl = `${protocol}://${host}`
-    const redirectUrl = `${baseUrl}/completar-cadastro`
+    // Usar /auth/callback como intermediário que irá redirecionar para completar-cadastro
+    const redirectUrl = `${baseUrl}/auth/callback`
 
     console.log('[generate-invite-link] Gerando link com redirect:', redirectUrl)
 
