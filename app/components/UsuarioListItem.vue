@@ -200,7 +200,9 @@ const papelIcon = computed(() => {
               v-show="menuAberto"
               class="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-xl z-50 py-1 overflow-hidden"
             >
+              <!-- Opção de Ativar/Desativar (desabilitada para proprietário) -->
               <button
+                v-if="usuario.papel !== 'proprietario'"
                 @click.stop="$emit('toggle-status', usuario); menuAberto = false"
                 class="w-full px-4 py-2 text-left text-sm text-foreground hover:bg-muted transition-colors flex items-center gap-2"
               >
@@ -210,20 +212,19 @@ const papelIcon = computed(() => {
                     class="w-4 h-4"
                   />
                 </ClientOnly>
-                {{ usuario.ativo ? 'Desativar' : 'Ativar' }}
+                {{ usuario.ativo ? 'Desativar Conta' : 'Ativar Conta' }}
               </button>
 
-              <div class="border-t border-border my-1"></div>
-
-              <button
-                @click.stop="$emit('excluir', usuario); menuAberto = false"
-                class="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2"
+              <!-- Mensagem para proprietário -->
+              <div
+                v-else
+                class="px-4 py-3 text-xs text-center text-muted-foreground"
               >
                 <ClientOnly>
-                  <font-awesome-icon icon="trash" class="w-4 h-4" />
+                  <font-awesome-icon icon="crown" class="w-4 h-4 mb-1 text-yellow-500" />
                 </ClientOnly>
-                Excluir Usuário
-              </button>
+                <p class="font-medium">Proprietário não pode ser desativado</p>
+              </div>
             </div>
           </Transition>
         </div>

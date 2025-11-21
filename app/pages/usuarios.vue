@@ -12,7 +12,6 @@ const usuarios = ref<any[]>([])
 const buscarUsuariosEmpresa = ref<any>(null)
 const atualizarUsuario = ref<any>(null)
 const toggleStatusUsuario = ref<any>(null)
-const removerUsuario = ref<any>(null)
 const toastSuccess = ref<any>(null)
 const toastError = ref<any>(null)
 
@@ -25,10 +24,6 @@ const selectedUsuario = ref<any>(null)
 const isModalLinkConviteOpen = ref(false)
 const linkConvite = ref('')
 
-// Estado para modal de confirmação de exclusão
-const isModalExcluirOpen = ref(false)
-const usuarioParaExcluir = ref<any>(null)
-
 // Buscar usuários ao montar o componente (apenas no cliente)
 onMounted(async () => {
   // Inicializar composables no cliente
@@ -36,7 +31,6 @@ onMounted(async () => {
   buscarUsuariosEmpresa.value = usuariosComposable.buscarUsuariosEmpresa
   atualizarUsuario.value = usuariosComposable.atualizarUsuario
   toggleStatusUsuario.value = usuariosComposable.toggleStatusUsuario
-  removerUsuario.value = usuariosComposable.removerUsuario
   
   const toast = useToastSafe()
   toastSuccess.value = toast.success
@@ -210,33 +204,7 @@ const toggleStatus = async (usuario: any) => {
   }
 }
 
-const abrirModalExcluir = (usuario: any) => {
-  usuarioParaExcluir.value = usuario
-  isModalExcluirOpen.value = true
-}
 
-const fecharModalExcluir = () => {
-  isModalExcluirOpen.value = false
-  usuarioParaExcluir.value = null
-}
-
-const confirmarExclusao = async () => {
-  if (!removerUsuario.value || !usuarioParaExcluir.value) return
-  
-  const resultado = await removerUsuario.value(usuarioParaExcluir.value.id)
-  
-  if (resultado.success) {
-    await carregarUsuarios()
-    if (toastSuccess.value) {
-      toastSuccess.value('Usuário removido com sucesso')
-    }
-    fecharModalExcluir()
-  } else {
-    if (toastError.value) {
-      toastError.value('Erro ao remover usuário')
-    }
-  }
-}
 
 const salvarEdicaoUsuario = async (data: any) => {
   if (!atualizarUsuario.value || !selectedUsuario.value) return
@@ -349,7 +317,6 @@ const salvarEdicaoUsuario = async (data: any) => {
           :usuario="usuario"
           @editar="abrirModalEditar"
           @toggle-status="toggleStatus"
-          @excluir="abrirModalExcluir"
           @copiar-link="copiarLinkConvite"
         />
 
@@ -506,71 +473,5 @@ const salvarEdicaoUsuario = async (data: any) => {
       </div>
     </Teleport>
 
-    <!-- Modal de Confirmação de Exclusão -->
-    <Teleport to="body">
-      <div
-        v-if="isModalExcluirOpen && usuarioParaExcluir"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-        @click.self="fecharModalExcluir"
-      >
-        <div class="bg-card border border-border rounded-xl shadow-2xl max-w-md w-full animate-in fade-in zoom-in duration-200">
-          <!-- Header -->
-          <div class="flex items-center gap-3 px-6 py-4 border-b border-border">
-            <div class="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center flex-shrink-0">
-              <ClientOnly>
-                <font-awesome-icon icon="exclamation-triangle" class="text-red-600 text-xl" />
-              </ClientOnly>
-            </div>
-            <div>
-              <h2 class="text-lg font-semibold text-foreground">Excluir Usuário</h2>
-              <p class="text-sm text-muted-foreground">Esta ação não poderá ser desfeita</p>
-            </div>
-          </div>
-
-          <!-- Body -->
-          <div class="p-6 space-y-4">
-            <div class="space-y-2">
-              <p class="text-foreground">
-                Tem certeza que deseja remover <strong class="font-semibold">{{ usuarioParaExcluir.nome }}</strong> da empresa?
-              </p>
-              <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                <div class="flex gap-3">
-                  <ClientOnly>
-                    <font-awesome-icon icon="info-circle" class="text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                  </ClientOnly>
-                  <div class="text-sm text-red-900 dark:text-red-100">
-                    <p class="font-semibold mb-1">Atenção!</p>
-                    <ul class="text-xs text-red-700 dark:text-red-300 space-y-1 list-disc list-inside">
-                      <li>O usuário perderá acesso imediato ao sistema</li>
-                      <li>Todas as permissões serão revogadas</li>
-                      <li>Esta ação é permanente e não pode ser revertida</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Footer -->
-          <div class="sticky bottom-0 bg-card border-t border-border px-6 py-4 flex items-center justify-end gap-3">
-            <AppButton
-              variant="outline"
-              @click="fecharModalExcluir"
-            >
-              Cancelar
-            </AppButton>
-            <AppButton
-              @click="confirmarExclusao"
-              class="bg-red-600 hover:bg-red-700 text-white"
-            >
-              <ClientOnly>
-                <font-awesome-icon icon="trash" class="mr-2" />
-              </ClientOnly>
-              Excluir Usuário
-            </AppButton>
-          </div>
-        </div>
-      </div>
-    </Teleport>
   </div>
 </template>

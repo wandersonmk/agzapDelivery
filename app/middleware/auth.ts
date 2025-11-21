@@ -16,6 +16,25 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     }
     
     console.log('[Auth Middleware] Usuário autenticado:', session.user.email)
+    
+    // Verificar se o usuário está ativo
+    const { data: vinculo } = await supabase
+      .from('usuarios_empresas')
+      .select('ativo')
+      .eq('usuario_id', session.user.id)
+      .single()
+    
+    // Se usuário está desativado e não está na página de conta desativada
+    if (vinculo && !vinculo.ativo && to.path !== '/conta-desativada') {
+      console.log('[Auth Middleware] Usuário desativado, redirecionando')
+      return navigateTo('/conta-desativada')
+    }
+    
+    // Se usuário está ativo mas está na página de conta desativada
+    if (vinculo && vinculo.ativo && to.path === '/conta-desativada') {
+      console.log('[Auth Middleware] Usuário reativado, redirecionando para dashboard')
+      return navigateTo('/pedidos')
+    }
   } catch (error) {
     console.error('[Auth Middleware] Erro:', error)
     return navigateTo('/login')

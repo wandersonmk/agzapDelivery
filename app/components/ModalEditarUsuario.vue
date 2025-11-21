@@ -72,6 +72,11 @@ const descricaoPapel = computed(() => {
   return descricoes[form.value.papel]
 })
 
+// Verificar se o usuário sendo editado é proprietário
+const ehProprietario = computed(() => {
+  return props.usuario?.papel === 'proprietario'
+})
+
 // Construir permissões baseado nos módulos selecionados
 const permissoesFinais = computed((): Permissoes => {
   return {
@@ -209,7 +214,8 @@ const salvar = () => {
             </label>
             <select
               v-model="form.papel"
-              class="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+              :disabled="usuario?.papel === 'proprietario'"
+              class="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <option
                 v-for="papel in papeisDisponiveis"
@@ -219,23 +225,35 @@ const salvar = () => {
                 {{ papel.label }}
               </option>
             </select>
-            <p class="text-xs text-muted-foreground mt-1">
+            <p v-if="usuario?.papel === 'proprietario'" class="text-xs text-amber-600 mt-1 flex items-center gap-1">
+              <font-awesome-icon icon="exclamation-triangle" class="w-3 h-3" />
+              Proprietário não pode alterar seu próprio papel
+            </p>
+            <p v-else class="text-xs text-muted-foreground mt-1">
               {{ descricaoPapel }}
             </p>
           </div>
 
           <!-- Seleção de Módulos -->
-          <div class="bg-muted/50 rounded-lg p-4">
+          <div class="bg-muted/50 rounded-lg p-4" :class="{ 'opacity-50': ehProprietario }">
             <h3 class="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
               <font-awesome-icon icon="lock" class="text-xs" />
               Módulos de Acesso
             </h3>
+            
+            <!-- Aviso para proprietário -->
+            <div v-if="ehProprietario" class="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-sm text-amber-600">
+              <font-awesome-icon icon="exclamation-triangle" class="w-4 h-4 mr-2" />
+              Proprietário não pode alterar seus próprios módulos de acesso (possui acesso total)
+            </div>
+            
               <div class="space-y-3">
-                <label class="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border hover:border-primary/50 cursor-pointer transition-colors">
+                <label class="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border hover:border-primary/50 cursor-pointer transition-colors" :class="{ 'pointer-events-none': ehProprietario }">
                   <input
                     v-model="form.modulos.atendimento"
                     type="checkbox"
-                    class="mt-1 rounded border-border"
+                    :disabled="ehProprietario"
+                    class="mt-1 rounded border-border disabled:opacity-50 disabled:cursor-not-allowed"
                     @change="toggleAtendimento"
                   />
                   <div class="flex-1">
@@ -244,11 +262,12 @@ const salvar = () => {
                   </div>
                 </label>
 
-                <label class="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border hover:border-primary/50 cursor-pointer transition-colors">
+                <label class="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border hover:border-primary/50 cursor-pointer transition-colors" :class="{ 'pointer-events-none': ehProprietario }">
                   <input
                     v-model="form.modulos.pedidos"
                     type="checkbox"
-                    class="mt-1 rounded border-border"
+                    :disabled="ehProprietario"
+                    class="mt-1 rounded border-border disabled:opacity-50 disabled:cursor-not-allowed"
                     @change="togglePedidos"
                   />
                   <div class="flex-1">
@@ -257,11 +276,12 @@ const salvar = () => {
                   </div>
                 </label>
 
-                <label class="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border hover:border-primary/50 cursor-pointer transition-colors">
+                <label class="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border hover:border-primary/50 cursor-pointer transition-colors" :class="{ 'pointer-events-none': ehProprietario }">
                   <input
                     v-model="form.modulos.cardapio"
                     type="checkbox"
-                    class="mt-1 rounded border-border"
+                    :disabled="ehProprietario"
+                    class="mt-1 rounded border-border disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <div class="flex-1">
                     <p class="font-medium text-sm text-foreground mb-1">🍕 Cardápio</p>
@@ -269,11 +289,12 @@ const salvar = () => {
                   </div>
                 </label>
 
-                <label class="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border hover:border-primary/50 cursor-pointer transition-colors">
+                <label class="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border hover:border-primary/50 cursor-pointer transition-colors" :class="{ 'pointer-events-none': ehProprietario }">
                   <input
                     v-model="form.modulos.relatorios"
                     type="checkbox"
-                    class="mt-1 rounded border-border"
+                    :disabled="ehProprietario"
+                    class="mt-1 rounded border-border disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <div class="flex-1">
                     <p class="font-medium text-sm text-foreground mb-1">📊 Relatórios</p>
@@ -281,11 +302,12 @@ const salvar = () => {
                   </div>
                 </label>
 
-                <label class="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border hover:border-primary/50 cursor-pointer transition-colors">
+                <label class="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border hover:border-primary/50 cursor-pointer transition-colors" :class="{ 'pointer-events-none': ehProprietario }">
                   <input
                     v-model="form.modulos.configuracoes"
                     type="checkbox"
-                    class="mt-1 rounded border-border"
+                    :disabled="ehProprietario"
+                    class="mt-1 rounded border-border disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <div class="flex-1">
                     <p class="font-medium text-sm text-foreground mb-1">⚙️ Configurações</p>

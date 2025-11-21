@@ -269,8 +269,8 @@ export function useUsuarios() {
 
         // Excluir da tabela auth.users via API admin
         try {
-          const response = await fetch('/api/auth/delete-user', {
-            method: 'POST',
+          const response = await fetch('/api/auth/admin-delete-user', {
+            method: 'DELETE',
             headers: {
               'Content-Type': 'application/json'
             },
