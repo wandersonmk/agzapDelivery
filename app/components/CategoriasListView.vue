@@ -26,6 +26,16 @@
               <span class="bg-primary/10 text-primary text-xs font-medium px-2.5 py-0.5 rounded-full">
                 {{ getProdutosPorCategoria(categoria.id).length }} produtos
               </span>
+              
+              <!-- Badge de disponibilidade restrita -->
+              <span 
+                v-if="temHorariosRestritos(categoria)"
+                class="bg-amber-500/10 text-amber-600 text-xs font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1"
+                :title="getDescricaoDisponibilidade(categoria)"
+              >
+                <font-awesome-icon icon="clock" class="w-3 h-3" />
+                {{ getDescricaoDisponibilidade(categoria) }}
+              </span>
             </div>
             
             <!-- Ações da Categoria -->
@@ -1000,6 +1010,9 @@ const props = defineProps<Props>()
 
 // Composable para gerenciar o cardápio
 const { adicionarProduto, editarProduto: editarProdutoCardapio, removerProduto } = useCardapio()
+
+// Composable para disponibilidade
+const { getDescricaoDisponibilidade, temHorariosRestritos } = useDisponibilidade()
 
 // Composable para gerenciar complementos
 const { buscarGrupos, atualizarGruposDoProduto, buscarGruposDoProduto } = useComplementos()

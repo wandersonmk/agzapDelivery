@@ -5,7 +5,7 @@
     @click="fechar"
   >
     <div 
-      class="bg-card border border-border rounded-lg p-6 max-w-md w-full mx-4"
+      class="bg-card border border-border rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
       @click.stop
     >
       <div class="flex items-center justify-between mb-6">
@@ -54,6 +54,14 @@
           </button>
         </div>
 
+        <!-- Editor de Disponibilidade -->
+        <div>
+          <label class="block text-sm font-medium text-foreground mb-2">
+            Dias e Horários de Disponibilidade
+          </label>
+          <DisponibilidadeEditor v-model="formulario.disponibilidade" />
+        </div>
+
         <!-- Botões -->
         <div class="flex items-center gap-3 justify-end pt-4">
           <button
@@ -98,7 +106,11 @@ const inputNome = ref<HTMLInputElement>()
 // Estado do formulário
 const formulario = ref({
   nome: '',
-  ativa: true
+  ativa: true,
+  disponibilidade: {
+    modo: 'sempre' as const,
+    regras: []
+  }
 })
 
 // Estado de erros
@@ -132,7 +144,11 @@ const validarFormulario = () => {
 const resetarFormulario = () => {
   formulario.value = {
     nome: '',
-    ativa: true
+    ativa: true,
+    disponibilidade: {
+      modo: 'sempre',
+      regras: []
+    }
   }
   erros.value = {
     nome: ''
@@ -154,7 +170,8 @@ const salvar = () => {
   const novaCategoria: Omit<Categoria, 'id'> = {
     nome: formulario.value.nome.trim(),
     ativa: formulario.value.ativa,
-    ordem: 0 // Será ajustado pelo composable
+    ordem: 0, // Será ajustado pelo composable
+    dias_disponiveis: formulario.value.disponibilidade
   }
   
   emit('save', novaCategoria)

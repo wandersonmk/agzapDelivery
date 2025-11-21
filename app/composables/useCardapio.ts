@@ -43,7 +43,8 @@ export const useCardapio = () => {
         descricao: cat.descricao || '',
         ordem: cat.ordem,
         ativa: cat.ativa,
-        icone: cat.icone || 'utensils'
+        icone: cat.icone || 'utensils',
+        dias_disponiveis: cat.dias_disponiveis || { modo: 'sempre', regras: [] }
       }))
     } catch (e: any) {
       error.value = e.message
@@ -110,7 +111,12 @@ export const useCardapio = () => {
   }
 
   // Getters
-  const categorias = computed(() => cardapioState.value.categorias.filter(c => c.ativa).sort((a, b) => a.ordem - b.ordem))
+  const categorias = computed(() => {
+    const { categoriaDisponivelAgora } = useDisponibilidade()
+    return cardapioState.value.categorias
+      .filter(c => c.ativa && categoriaDisponivelAgora(c))
+      .sort((a, b) => a.ordem - b.ordem)
+  })
   const produtos = computed(() => cardapioState.value.produtos) // Retorna todos os produtos, incluindo inativos
 
   // Funções para categorias
@@ -131,7 +137,8 @@ export const useCardapio = () => {
           descricao: categoria.descricao,
           icone: categoria.icone,
           ordem: categoria.ordem,
-          ativa: categoria.ativa
+          ativa: categoria.ativa,
+          dias_disponiveis: categoria.dias_disponiveis || { modo: 'sempre', regras: [] }
         })
         .select()
         .single()

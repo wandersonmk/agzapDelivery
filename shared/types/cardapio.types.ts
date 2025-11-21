@@ -1,6 +1,19 @@
 // Tipos para o sistema de cardápio
 import type { GrupoComplemento, ComplementoSelecionado, GrupoComplementoSelecionado } from './complementos.types'
 
+export type DiaSemana = 'domingo' | 'segunda' | 'terca' | 'quarta' | 'quinta' | 'sexta' | 'sabado'
+
+export interface RegraDisponibilidade {
+  dia: DiaSemana
+  horario_inicio?: string  // Formato "HH:mm"
+  horario_fim?: string     // Formato "HH:mm"
+}
+
+export interface DisponibilidadeCategoria {
+  modo: 'sempre' | 'dias_especificos'
+  regras: RegraDisponibilidade[]
+}
+
 export interface Categoria {
   id: string
   nome: string
@@ -8,6 +21,7 @@ export interface Categoria {
   ordem: number
   ativa: boolean
   icone?: string
+  dias_disponiveis?: DisponibilidadeCategoria
 }
 
 // DEPRECATED: Usar GrupoComplemento e Complemento de complementos.types
