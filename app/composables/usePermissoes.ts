@@ -129,9 +129,9 @@ export function usePermissoes() {
    * Útil para verificações rápidas em v-if
    */
   const permissoesSync = computed(() => {
-    // Tenta pegar do estado global se já estiver carregado
-    const empresaState = useState('empresa-state')
-    return (empresaState.value as any)?.permissoes || null
+    // Pega diretamente da empresa atual do useEmpresa
+    const { empresaAtual } = useEmpresa()
+    return empresaAtual.value?.permissoes || null
   })
 
   return {

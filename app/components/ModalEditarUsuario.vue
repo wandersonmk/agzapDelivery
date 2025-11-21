@@ -29,18 +29,18 @@ const form = ref({
 // Sincronizar com o usuário selecionado
 watch(() => [props.isOpen, props.usuario], ([isOpen, usuario]) => {
   if (isOpen && usuario) {
-    // Detectar quais módulos estão ativos baseado nas permissões do papel
-    const permissoesPadrao = PERMISSOES_PADRAO[usuario.papel as PapelUsuario]
+    // Usar as permissões REAIS do usuário (não as padrões do papel)
+    const permissoesReais = usuario.permissoes || PERMISSOES_PADRAO[usuario.papel as PapelUsuario]
     
     form.value = {
       nome: usuario.nome || '',
       papel: usuario.papel,
       modulos: {
-        atendimento: permissoesPadrao.pedidos.visualizar && permissoesPadrao.pedidos.alterar_status && !permissoesPadrao.pedidos.criar,
-        pedidos: temAlgumaPermissaoModulo(permissoesPadrao.pedidos) && permissoesPadrao.pedidos.criar,
-        cardapio: temAlgumaPermissaoModulo(permissoesPadrao.cardapio),
-        relatorios: temAlgumaPermissaoModulo(permissoesPadrao.relatorios),
-        configuracoes: temAlgumaPermissaoModulo(permissoesPadrao.configuracoes)
+        atendimento: permissoesReais.pedidos.visualizar && permissoesReais.pedidos.alterar_status && !permissoesReais.pedidos.criar,
+        pedidos: temAlgumaPermissaoModulo(permissoesReais.pedidos) && permissoesReais.pedidos.criar,
+        cardapio: temAlgumaPermissaoModulo(permissoesReais.cardapio),
+        relatorios: temAlgumaPermissaoModulo(permissoesReais.relatorios),
+        configuracoes: temAlgumaPermissaoModulo(permissoesReais.configuracoes)
       }
     }
   }
@@ -164,7 +164,7 @@ const salvar = () => {
   }
   
   emit('salvar', dataToSave)
-  emit('close')
+  // Não fechar imediatamente - deixar a página controlar após mostrar toast
 }
 </script>
 

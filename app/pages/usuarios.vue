@@ -56,6 +56,7 @@ const carregarUsuarios = async () => {
       email: vinculo.usuarios?.email || 'Email não disponível',
       foto: vinculo.usuarios?.foto,
       papel: vinculo.papel,
+      permissoes: vinculo.permissoes, // Incluir permissões salvas do vínculo
       ativo: vinculo.ativo,
       isPendente: vinculo.isPendente || false, // Flag de convite pendente
       vinculadoEm: new Date(vinculo.created_at)
@@ -209,6 +210,17 @@ const toggleStatus = async (usuario: any) => {
 const salvarEdicaoUsuario = async (data: any) => {
   if (!atualizarUsuario.value || !selectedUsuario.value) return
   
+  console.log('[usuarios.vue] Salvando usuário:', {
+    vinculoId: selectedUsuario.value.id,
+    usuarioId: selectedUsuario.value.usuarioId,
+    nome: data.nome,
+    papel: data.papel,
+    permissoes: data.permissoes
+  })
+  
+  // Obter toast diretamente (é async!)
+  const toast = await useToastSafe()
+  
   try {
     const resultado = await atualizarUsuario.value(
       selectedUsuario.value.id, // ID do vínculo
@@ -218,20 +230,31 @@ const salvarEdicaoUsuario = async (data: any) => {
       data.permissoes // Sempre envia as permissões (personalizadas ou padrão)
     )
     
+    console.log('[usuarios.vue] Resultado da atualização:', resultado)
+    
+    // Fechar modal sempre
+    fecharModais()
+    
     if (resultado.success) {
+      // Recarregar usuários
       await carregarUsuarios()
-      if (toastSuccess.value) {
-        toastSuccess.value('Usuário atualizado com sucesso!')
+      
+      // Mostrar toast de sucesso
+      if (toast && toast.success) {
+        toast.success('Usuário atualizado com sucesso!')
       }
     } else {
-      if (toastError.value) {
-        toastError.value(resultado.message || 'Erro ao atualizar usuário')
+      if (toast && toast.error) {
+        toast.error(resultado.message || 'Erro ao atualizar usuário')
       }
     }
   } catch (error: any) {
-    console.error('Erro ao salvar edição:', error)
-    if (toastError.value) {
-      toastError.value('Erro ao atualizar usuário')
+    console.error('[usuarios.vue] Erro ao salvar edição:', error)
+    // Fechar modal mesmo com erro
+    fecharModais()
+    
+    if (toast && toast.error) {
+      toast.error('Erro ao atualizar usuário')
     }
   }
 }
