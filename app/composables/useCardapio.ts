@@ -83,6 +83,9 @@ export const useCardapio = () => {
         categoriaId: prod.categoria_id,
         ativo: prod.ativo,
         tipo: prod.tipo,
+        // Campos de promoção
+        preco_promocional: prod.preco_promocional || null,
+        promocao_ativa: prod.promocao_ativa || false,
         // Campos opcionais para pizzas
         ...(prod.tamanhos && { tamanhos: prod.tamanhos }),
         ...(prod.sabores && { sabores: prod.sabores })
@@ -222,7 +225,9 @@ export const useCardapio = () => {
           tipo: produto.tipo,
           ativo: produto.ativo,
           tamanhos: produto.tamanhos || null,
-          sabores: produto.sabores || null
+          sabores: produto.sabores || null,
+          preco_promocional: produto.preco_promocional || null,
+          promocao_ativa: produto.promocao_ativa || false
         })
         .select()
         .single()
@@ -271,6 +276,8 @@ export const useCardapio = () => {
       if (dadosAtualizados.ativo !== undefined) updateData.ativo = dadosAtualizados.ativo
       if (dadosAtualizados.tamanhos !== undefined) updateData.tamanhos = dadosAtualizados.tamanhos
       if (dadosAtualizados.sabores !== undefined) updateData.sabores = dadosAtualizados.sabores
+      if (dadosAtualizados.preco_promocional !== undefined) updateData.preco_promocional = dadosAtualizados.preco_promocional
+      if (dadosAtualizados.promocao_ativa !== undefined) updateData.promocao_ativa = dadosAtualizados.promocao_ativa
       
       // Processar foto se foi atualizada
       if (dadosAtualizados.foto !== undefined) {

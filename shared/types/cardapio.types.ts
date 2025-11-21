@@ -36,6 +36,9 @@ export interface Produto {
   categoriaId: string
   ativo: boolean
   tipo: 'comum' | 'pizza'
+  // Sistema de promoção
+  preco_promocional?: number | null
+  promocao_ativa?: boolean
   // Para pizzas
   sabores?: SaborPizza[]
   tamanhos?: {

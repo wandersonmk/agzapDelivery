@@ -144,7 +144,7 @@
                   <p v-if="produto.descricao" class="text-sm text-muted-foreground mb-2">{{ produto.descricao }}</p>
                   
                   <!-- Preços: se for pizza mostra todos os tamanhos, se não mostra preço único -->
-                  <div class="flex items-center space-x-4">
+                  <div class="space-y-2">
                     <!-- Produto tipo pizza: mostrar tamanhos -->
                     <div v-if="produto.tipo === 'pizza' && produto.tamanhos && Array.isArray(produto.tamanhos)" class="flex flex-wrap gap-2">
                       <div 
@@ -158,10 +158,26 @@
                       </div>
                     </div>
                     
-                    <!-- Produto comum: mostrar preço único -->
-                    <span v-else class="text-lg font-bold" :class="produto.ativo ? 'text-primary' : 'text-muted-foreground'">
-                      R$ {{ Number(produto.preco).toFixed(2).replace('.', ',') }}
-                    </span>
+                    <!-- Produto comum: mostrar preço com promoção -->
+                    <div v-else class="flex items-center gap-2">
+                      <!-- Se tiver promoção ativa -->
+                      <template v-if="produto.promocao_ativa && produto.preco_promocional && produto.preco_promocional > 0">
+                        <span class="text-sm text-muted-foreground line-through">
+                          R$ {{ Number(produto.preco).toFixed(2).replace('.', ',') }}
+                        </span>
+                        <span class="text-xl font-bold text-primary">
+                          R$ {{ Number(produto.preco_promocional).toFixed(2).replace('.', ',') }}
+                        </span>
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-500 font-semibold">
+                          🏷️ PROMOÇÃO
+                        </span>
+                      </template>
+                      <!-- Sem promoção: preço normal -->
+                      <span v-else class="text-lg font-bold" :class="produto.ativo ? 'text-primary' : 'text-muted-foreground'">
+                        R$ {{ Number(produto.preco).toFixed(2).replace('.', ',') }}
+                      </span>
+                    </div>
+
                   </div>
                 </div>
                 
@@ -429,22 +445,72 @@
           </div>
 
           <!-- Preço (Produto Comum) -->
-          <div v-if="formularioProduto.tipo === 'comum'">
-            <label class="block text-sm font-medium text-foreground mb-2">
-              Preço *
-            </label>
-            <div class="relative">
-              <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
-                R$
-              </span>
-              <input
-                v-model="precoFormatado"
-                @input="formatarPreco"
-                type="text"
-                required
-                class="w-full pl-10 pr-3 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="0,00"
-              />
+          <div v-if="formularioProduto.tipo === 'comum'" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-foreground mb-2">
+                Preço Original *
+              </label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+                  R$
+                </span>
+                <input
+                  v-model="precoFormatado"
+                  @input="formatarPreco"
+                  type="text"
+                  required
+                  class="w-full pl-10 pr-3 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="0,00"
+                />
+              </div>
+            </div>
+
+            <!-- Sistema de Promoção -->
+            <div class="border border-border rounded-lg p-4 bg-muted/5">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                  <span class="text-2xl">🏷️</span>
+                  <h4 class="text-sm font-semibold text-foreground">Promoção</h4>
+                </div>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <span class="text-xs text-muted-foreground">
+                    {{ formularioProduto.promocao_ativa ? 'Ativa' : 'Inativa' }}
+                  </span>
+                  <input
+                    type="checkbox"
+                    v-model="formularioProduto.promocao_ativa"
+                    class="w-10 h-5 rounded-full appearance-none cursor-pointer transition-colors relative"
+                    :class="formularioProduto.promocao_ativa ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-600'"
+                    style="box-shadow: inset 0 0 0 2px transparent;"
+                  />
+                </label>
+              </div>
+
+              <div v-if="formularioProduto.promocao_ativa" class="space-y-2">
+                <label class="block text-xs font-medium text-foreground">
+                  Preço Promocional *
+                </label>
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-primary font-medium">
+                    R$
+                  </span>
+                  <input
+                    v-model="precoPromocionalFormatado"
+                    @input="formatarPrecoPromocional"
+                    type="text"
+                    :required="formularioProduto.promocao_ativa"
+                    class="w-full pl-10 pr-3 py-2 border-2 border-primary/50 rounded-lg bg-background text-primary font-semibold focus:ring-2 focus:ring-primary focus:border-primary"
+                    placeholder="0,00"
+                  />
+                </div>
+                <p class="text-xs text-muted-foreground">
+                  💡 O preço promocional será exibido em destaque para os clientes
+                </p>
+              </div>
+
+              <div v-else class="text-xs text-muted-foreground text-center py-2">
+                Ative a promoção para definir um preço especial
+              </div>
             </div>
           </div>
 
@@ -1070,7 +1136,9 @@ const formularioProduto = ref({
   tipo: 'comum' as 'comum' | 'pizza',
   ativo: true,
   foto: null as File | null,
-  grupos_ids: [] as string[] // IDs dos grupos de complementos selecionados
+  grupos_ids: [] as string[], // IDs dos grupos de complementos selecionados
+  preco_promocional: null as number | null,
+  promocao_ativa: false
 })
 
 // Estados para o upload de foto
@@ -1079,6 +1147,7 @@ const inputFoto = ref<HTMLInputElement | null>(null)
 
 // Estado para o preço formatado (produto comum)
 const precoFormatado = ref('')
+const precoPromocionalFormatado = ref('')
 
 // Estados para preços dos tamanhos (pizza)
 const precosTamanhos = ref({
@@ -1107,13 +1176,20 @@ const getProdutosFiltrados = (categoriaId: string): Produto[] => {
   const produtos = getProdutosPorCategoria(categoriaId)
   const filtro = filtrosProdutos.value[categoriaId]
   
+  let produtosFiltrados: Produto[]
+  
   if (!filtro || filtro.trim() === '') {
-    return produtos
+    produtosFiltrados = produtos
+  } else {
+    produtosFiltrados = produtos.filter(produto => 
+      produto.nome.toLowerCase().includes(filtro.toLowerCase()) ||
+      (produto.descricao && produto.descricao.toLowerCase().includes(filtro.toLowerCase()))
+    )
   }
   
-  return produtos.filter(produto => 
-    produto.nome.toLowerCase().includes(filtro.toLowerCase()) ||
-    (produto.descricao && produto.descricao.toLowerCase().includes(filtro.toLowerCase()))
+  // Ordenar por ordem alfabética
+  return produtosFiltrados.sort((a, b) => 
+    a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' })
   )
 }
 
@@ -1165,9 +1241,12 @@ const resetarFormularioProduto = () => {
     tipo: 'comum',
     ativo: true,
     foto: null,
-    grupos_ids: []
+    grupos_ids: [],
+    preco_promocional: null,
+    promocao_ativa: false
   }
   precoFormatado.value = ''
+  precoPromocionalFormatado.value = ''
   precosTamanhos.value = { P: '', M: '', G: '', F: '' }
   previewFoto.value = null
   modoEdicao.value = false
@@ -1259,6 +1338,11 @@ const salvarNovoProduto = async () => {
     } else {
       // Se for produto comum, usar preço único
       produtoAtualizado.preco = Number(formularioProduto.value.preco)
+      // Adicionar campos de promoção
+      produtoAtualizado.preco_promocional = formularioProduto.value.promocao_ativa && formularioProduto.value.preco_promocional 
+        ? Number(formularioProduto.value.preco_promocional) 
+        : null
+      produtoAtualizado.promocao_ativa = formularioProduto.value.promocao_ativa
     }
     
     // Editar o produto usando o composable
@@ -1297,6 +1381,11 @@ const salvarNovoProduto = async () => {
     } else {
       // Se for produto comum, usar preço único
       novoProduto.preco = Number(formularioProduto.value.preco)
+      // Adicionar campos de promoção
+      novoProduto.preco_promocional = formularioProduto.value.promocao_ativa && formularioProduto.value.preco_promocional 
+        ? Number(formularioProduto.value.preco_promocional) 
+        : null
+      novoProduto.promocao_ativa = formularioProduto.value.promocao_ativa
     }
     
     // Adicionar o produto usando o composable
@@ -1331,6 +1420,25 @@ const formatarPreco = (event: Event) => {
   
   // Formata para exibição brasileira
   precoFormatado.value = numeroValor.toFixed(2).replace('.', ',')
+}
+
+// Função para formatação de preço promocional
+const formatarPrecoPromocional = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  let valor = input.value.replace(/\D/g, '') // Remove todos os caracteres não numéricos
+  
+  if (valor === '') {
+    precoPromocionalFormatado.value = ''
+    formularioProduto.value.preco_promocional = null
+    return
+  }
+  
+  // Converte para número e divide por 100 para ter centavos
+  const numeroValor = parseInt(valor) / 100
+  formularioProduto.value.preco_promocional = numeroValor
+  
+  // Formata para exibição brasileira
+  precoPromocionalFormatado.value = numeroValor.toFixed(2).replace('.', ',')
 }
 
 // Função para formatação de preço por tamanho (pizza)
@@ -1410,7 +1518,9 @@ const editarProduto = async (produto: Produto) => {
     tipo: produto.tipo,
     ativo: produto.ativo,
     foto: null, // Resetar o input de foto
-    grupos_ids: gruposIds // Grupos selecionados
+    grupos_ids: gruposIds, // Grupos selecionados
+    preco_promocional: produto.preco_promocional || null,
+    promocao_ativa: produto.promocao_ativa || false
   }
   
   // Se for pizza, carregar os preços dos tamanhos
@@ -1426,6 +1536,12 @@ const editarProduto = async (produto: Produto) => {
   } else {
     // Se for produto comum, formatar o preço único
     precoFormatado.value = produto.preco.toFixed(2).replace('.', ',')
+    // Formatar preço promocional se existir
+    if (produto.preco_promocional && produto.preco_promocional > 0) {
+      precoPromocionalFormatado.value = produto.preco_promocional.toFixed(2).replace('.', ',')
+    } else {
+      precoPromocionalFormatado.value = ''
+    }
     // Resetar preços de tamanhos
     precosTamanhos.value = { P: '', M: '', G: '', F: '' }
   }
@@ -1527,5 +1643,26 @@ const toggleStatusProduto = async (produto: Produto) => {
 .overflow-y-auto {
   scrollbar-width: thin;
   scrollbar-color: #26272B transparent;
+}
+
+/* Toggle switch customizado */
+input[type="checkbox"].w-10 {
+  position: relative;
+}
+
+input[type="checkbox"].w-10::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+input[type="checkbox"].w-10:checked::after {
+  transform: translateX(20px);
 }
 </style>
