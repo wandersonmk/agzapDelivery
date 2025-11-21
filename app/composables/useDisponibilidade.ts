@@ -7,7 +7,7 @@ export const useDisponibilidade = () => {
   const converterHoraParaMinutos = (hora?: string): number => {
     if (!hora) return 0
     const [horas, minutos] = hora.split(':').map(Number)
-    return horas * 60 + minutos
+    return (horas || 0) * 60 + (minutos || 0)
   }
 
   /**
@@ -15,7 +15,7 @@ export const useDisponibilidade = () => {
    */
   const getDiaSemanaAtual = (): DiaSemana => {
     const dias: DiaSemana[] = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado']
-    return dias[new Date().getDay()]
+    return dias[new Date().getDay()] as DiaSemana
   }
 
   /**

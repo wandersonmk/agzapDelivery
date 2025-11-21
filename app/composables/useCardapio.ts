@@ -290,8 +290,9 @@ export const useCardapio = () => {
       if (dadosAtualizados.foto !== undefined) {
         if (dadosAtualizados.foto instanceof File) {
           // Substituir foto: upload nova e deletar antiga
+          const fotoAntiga = produtoAtual?.foto
           const fotoUrl = await substituirImagem(
-            produtoAtual?.foto || null,
+            typeof fotoAntiga === 'string' ? fotoAntiga : null,
             dadosAtualizados.foto,
             'produtos'
           )
@@ -301,7 +302,9 @@ export const useCardapio = () => {
           updateData.foto = fotoUrl
         } else if (dadosAtualizados.foto === null && produtoAtual?.foto) {
           // Se foto foi removida, deletar do storage
-          await removerImagem(produtoAtual.foto)
+          if (typeof produtoAtual.foto === 'string') {
+            await removerImagem(produtoAtual.foto)
+          }
           updateData.foto = null
         } else if (typeof dadosAtualizados.foto === 'string') {
           updateData.foto = dadosAtualizados.foto
@@ -359,7 +362,7 @@ export const useCardapio = () => {
       if (supabaseError) throw supabaseError
       
       // Remover foto do storage se existir
-      if (produto?.foto) {
+      if (produto?.foto && typeof produto.foto === 'string') {
         await removerImagem(produto.foto)
       }
       

@@ -232,7 +232,7 @@
       @click="fecharModalEdicao"
     >
       <div 
-        class="bg-card border border-border rounded-lg p-6 max-w-md w-full mx-4"
+        class="bg-card border border-border rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
         @click.stop
       >
         <h3 class="text-lg font-semibold text-foreground mb-4">Editar Categoria</h3>
@@ -265,6 +265,14 @@
                 :class="statusEdicao ? 'translate-x-6' : 'translate-x-1'"
               ></span>
             </button>
+          </div>
+
+          <!-- Editor de Disponibilidade -->
+          <div>
+            <label class="block text-sm font-medium text-foreground mb-2">
+              Dias e Horários de Disponibilidade
+            </label>
+            <DisponibilidadeEditor v-model="disponibilidadeEdicao" />
           </div>
         </div>
         
@@ -998,7 +1006,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Categoria, Produto } from '@shared/types/cardapio.types'
+import type { Categoria, Produto, DisponibilidadeCategoria } from '@shared/types/cardapio.types'
 import type { GrupoComplemento } from '@shared/types/complementos.types'
 
 interface Props {
@@ -1132,6 +1140,10 @@ const categoriaEditando = ref<Categoria | null>(null)
 const categoriaExcluindo = ref<Categoria | null>(null)
 const nomeEdicao = ref('')
 const statusEdicao = ref(true)
+const disponibilidadeEdicao = ref<DisponibilidadeCategoria>({
+  modo: 'sempre',
+  regras: []
+})
 
 // Estados do modal de exclusão de produto
 const produtoExcluindo = ref<Produto | null>(null)
@@ -1215,8 +1227,11 @@ const produtosNaCategoria = computed(() => {
 // Computed para verificar se houve mudanças na edição
 const houveMudancas = computed(() => {
   if (!categoriaEditando.value) return false
+  const dispAtual = categoriaEditando.value.dias_disponiveis || { modo: 'sempre', regras: [] }
+  const dispMudou = JSON.stringify(dispAtual) !== JSON.stringify(disponibilidadeEdicao.value)
   return nomeEdicao.value.trim() !== categoriaEditando.value.nome || 
-         statusEdicao.value !== categoriaEditando.value.ativa
+         statusEdicao.value !== categoriaEditando.value.ativa ||
+         dispMudou
 })
 
 // Computed para validar se pode salvar
@@ -1274,19 +1289,26 @@ const abrirModalEdicao = (categoria: Categoria) => {
   categoriaEditando.value = categoria
   nomeEdicao.value = categoria.nome
   statusEdicao.value = categoria.ativa
+  disponibilidadeEdicao.value = categoria.dias_disponiveis || { modo: 'sempre', regras: [] }
 }
 
 const fecharModalEdicao = () => {
   categoriaEditando.value = null
   nomeEdicao.value = ''
   statusEdicao.value = true
+  disponibilidadeEdicao.value = { modo: 'sempre', regras: [] }
 }
 
-const salvarEdicao = () => {
+const salvarEdicao = async () => {
   if (!categoriaEditando.value || !nomeEdicao.value.trim()) return
   
-  // TODO: Implementar a edição da categoria
-  console.log('Editando categoria:', categoriaEditando.value.id, 'Novo nome:', nomeEdicao.value.trim(), 'Status:', statusEdicao.value)
+  const { editarCategoria } = useCardapio()
+  
+  await editarCategoria(categoriaEditando.value.id, {
+    nome: nomeEdicao.value.trim(),
+    ativa: statusEdicao.value,
+    dias_disponiveis: disponibilidadeEdicao.value
+  })
   
   fecharModalEdicao()
 }

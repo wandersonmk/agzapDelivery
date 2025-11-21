@@ -218,15 +218,77 @@ export function useUsuarios() {
 
   /**
    * Remove vínculo usuário-empresa
+   * Se o usuário não estiver vinculado a nenhuma outra empresa, remove também de auth.users e usuarios
    */
   async function removerUsuario(vinculoId: string) {
     try {
-      const { error } = await supabase
+      // 1. Buscar informações do vínculo antes de excluir
+      const { data: vinculo, error: errorVinculo } = await supabase
+        .from('usuarios_empresas')
+        .select('usuario_id, empresa_id')
+        .eq('id', vinculoId)
+        .single()
+
+      if (errorVinculo || !vinculo) {
+        throw new Error('Vínculo não encontrado')
+      }
+
+      const usuarioId = vinculo.usuario_id
+
+      // 2. Remover vínculo da tabela usuarios_empresas
+      const { error: errorDelete } = await supabase
         .from('usuarios_empresas')
         .delete()
         .eq('id', vinculoId)
 
-      if (error) throw error
+      if (errorDelete) throw errorDelete
+
+      // 3. Verificar se o usuário tem outros vínculos com outras empresas
+      const { data: outrosVinculos, error: errorOutrosVinculos } = await supabase
+        .from('usuarios_empresas')
+        .select('id')
+        .eq('usuario_id', usuarioId)
+
+      if (errorOutrosVinculos) {
+        console.warn('[useUsuarios] Erro ao verificar outros vínculos:', errorOutrosVinculos)
+      }
+
+      // 4. Se não tiver outros vínculos, excluir usuário completamente
+      if (!outrosVinculos || outrosVinculos.length === 0) {
+        console.log('[useUsuarios] Usuário não tem mais vínculos. Excluindo das tabelas usuarios e auth.users')
+        
+        // Excluir da tabela usuarios (public)
+        const { error: errorDeleteUsuario } = await supabase
+          .from('usuarios')
+          .delete()
+          .eq('id', usuarioId)
+
+        if (errorDeleteUsuario) {
+          console.warn('[useUsuarios] Erro ao excluir de usuarios:', errorDeleteUsuario)
+        }
+
+        // Excluir da tabela auth.users via API admin
+        try {
+          const response = await fetch('/api/auth/delete-user', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ userId: usuarioId })
+          })
+          
+          if (!response.ok) {
+            const errorData = await response.json()
+            throw new Error(errorData.message || 'Erro ao excluir usuário do auth')
+          }
+          
+          console.log('[useUsuarios] Usuário excluído de auth.users')
+        } catch (errorAuth: any) {
+          console.warn('[useUsuarios] Erro ao excluir de auth.users:', errorAuth.message)
+        }
+      } else {
+        console.log('[useUsuarios] Usuário tem outros vínculos. Apenas removendo vínculo desta empresa.')
+      }
 
       return { success: true }
     } catch (error: any) {

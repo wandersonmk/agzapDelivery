@@ -27,6 +27,12 @@ const emit = defineEmits<{
 const menuAberto = ref(false)
 const menuRef = ref<HTMLElement | null>(null)
 
+// Toggle menu
+const toggleMenu = (event: Event) => {
+  event.stopPropagation()
+  menuAberto.value = !menuAberto.value
+}
+
 // Fechar menu ao clicar fora
 const fecharMenu = (event: MouseEvent) => {
   if (menuRef.value && !menuRef.value.contains(event.target as Node)) {
@@ -107,7 +113,9 @@ const papelIcon = computed(() => {
               v-if="usuario.isPendente"
               class="px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 flex items-center gap-1"
             >
-              <font-awesome-icon icon="clock" class="text-xs" />
+              <ClientOnly>
+                <font-awesome-icon icon="clock" class="text-xs" />
+              </ClientOnly>
               Convite Pendente
             </span>
             <span
@@ -127,7 +135,9 @@ const papelIcon = computed(() => {
             <span class="truncate">{{ usuario.email }}</span>
             <span class="hidden sm:inline">•</span>
             <span class="flex items-center gap-1.5">
-              <font-awesome-icon :icon="papelIcon" class="text-xs" />
+              <ClientOnly>
+                <font-awesome-icon :icon="papelIcon" class="text-xs" />
+              </ClientOnly>
               <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', papelColor]">
                 {{ papelLabel }}
               </span>
@@ -147,7 +157,9 @@ const papelIcon = computed(() => {
           class="px-3 py-1.5 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors flex items-center gap-2"
           title="Copiar link de convite"
         >
-          <font-awesome-icon icon="link" class="w-4 h-4" />
+          <ClientOnly>
+            <font-awesome-icon icon="link" class="w-4 h-4" />
+          </ClientOnly>
           Copiar Link
         </button>
 
@@ -158,44 +170,62 @@ const papelIcon = computed(() => {
           class="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
           title="Editar usuário"
         >
-          <font-awesome-icon icon="edit" class="w-4 h-4" />
+          <ClientOnly>
+            <font-awesome-icon icon="edit" class="w-4 h-4" />
+          </ClientOnly>
         </button>
 
         <!-- Menu de ações -->
-        <div class="relative">
+        <div class="relative" ref="menuRef">
           <button
-            @click="menuAberto = !menuAberto"
+            @click="toggleMenu"
             class="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
             title="Mais opções"
           >
-            <font-awesome-icon icon="ellipsis-vertical" class="w-4 h-4" />
+            <ClientOnly>
+              <font-awesome-icon icon="ellipsis-vertical" class="w-4 h-4" />
+            </ClientOnly>
           </button>
 
           <!-- Dropdown menu -->
-          <div
-            v-if="menuAberto"
-            ref="menuRef"
-            class="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-10 py-1"
+          <Transition
+            enter-active-class="transition duration-100 ease-out"
+            enter-from-class="transform scale-95 opacity-0"
+            enter-to-class="transform scale-100 opacity-100"
+            leave-active-class="transition duration-75 ease-in"
+            leave-from-class="transform scale-100 opacity-100"
+            leave-to-class="transform scale-95 opacity-0"
           >
-            <button
-              @click="$emit('toggle-status', usuario); menuAberto = false"
-              class="w-full px-4 py-2 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2"
+            <div
+              v-show="menuAberto"
+              class="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-xl z-50 py-1 overflow-hidden"
             >
-              <font-awesome-icon
-                :icon="usuario.ativo ? 'ban' : 'check-circle'"
-                class="w-4 h-4"
-              />
-              {{ usuario.ativo ? 'Desativar' : 'Ativar' }}
-            </button>
+              <button
+                @click.stop="$emit('toggle-status', usuario); menuAberto = false"
+                class="w-full px-4 py-2 text-left text-sm text-foreground hover:bg-muted transition-colors flex items-center gap-2"
+              >
+                <ClientOnly>
+                  <font-awesome-icon
+                    :icon="usuario.ativo ? 'ban' : 'check-circle'"
+                    class="w-4 h-4"
+                  />
+                </ClientOnly>
+                {{ usuario.ativo ? 'Desativar' : 'Ativar' }}
+              </button>
 
-            <button
-              @click="$emit('excluir', usuario); menuAberto = false"
-              class="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2"
-            >
-              <font-awesome-icon icon="trash" class="w-4 h-4" />
-              Excluir
-            </button>
-          </div>
+              <div class="border-t border-border my-1"></div>
+
+              <button
+                @click.stop="$emit('excluir', usuario); menuAberto = false"
+                class="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2"
+              >
+                <ClientOnly>
+                  <font-awesome-icon icon="trash" class="w-4 h-4" />
+                </ClientOnly>
+                Excluir Usuário
+              </button>
+            </div>
+          </Transition>
         </div>
       </div>
     </div>

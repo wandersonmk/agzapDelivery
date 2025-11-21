@@ -81,12 +81,17 @@ import {
   faPaperPlane,
   faAddressCard,
   faChartLine,
-  faComment
+  faComment,
+  faExclamationCircle,
+  faEnvelope,
+  faExternalLinkAlt,
+  faLink
 } from '@fortawesome/free-solid-svg-icons'
 
 // Importar ícones de marca (brands)
 import {
-  faWhatsapp
+  faWhatsapp,
+  faTelegram
 } from '@fortawesome/free-brands-svg-icons'
 
 // Adicionar todos os ícones à biblioteca
@@ -167,7 +172,12 @@ library.add(
   faAddressCard,
   faChartLine,
   faComment,
-  faWhatsapp as IconDefinition
+  faExclamationCircle,
+  faEnvelope,
+  faExternalLinkAlt,
+  faLink,
+  faWhatsapp as IconDefinition,
+  faTelegram as IconDefinition
 )
 
 export default defineNuxtPlugin((nuxtApp) => {

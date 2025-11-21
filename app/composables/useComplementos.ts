@@ -43,8 +43,9 @@ export const useComplementos = () => {
 
       if (error) throw error
 
-      state.value.grupos = data || []
-      return data || []
+      const grupos = (data || []) as GrupoComplemento[]
+      state.value.grupos = grupos
+      return grupos
     } catch (e: any) {
       state.value.error = e.message
       console.error('Erro ao buscar grupos:', e)

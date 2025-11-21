@@ -13,24 +13,19 @@ const emit = defineEmits<{
   conviteEnviado: [link: string]
 }>()
 
-// Composables (inicializados no cliente)
-const enviarConvite = ref<any>(null)
-const toast = ref<any>(null)
-
-// Inicializar composables apenas no cliente
-onMounted(async () => {
-  const usuariosComposable = useUsuarios()
-  enviarConvite.value = usuariosComposable.enviarConvite
-  toast.value = await useToastSafe()
-})
-
 // Estado do formulário
 const form = ref({
   nome: '',
   email: '',
   senha: '',
   papel: 'atendente' as PapelUsuario,
-  permissoesPersonalizadas: false
+  modulos: {
+    atendimento: false,
+    pedidos: true,
+    cardapio: false,
+    relatorios: false,
+    configuracoes: false
+  }
 })
 
 const salvando = ref(false)
@@ -44,10 +39,19 @@ watch(() => props.isOpen, (isOpen) => {
       email: '',
       senha: '',
       papel: 'atendente',
-      permissoesPersonalizadas: false
+      modulos: {
+        atendimento: false,
+        pedidos: true,
+        cardapio: false,
+        relatorios: false,
+        configuracoes: false
+      }
     }
     erro.value = ''
     salvando.value = false
+  } else {
+    // Ao abrir, atualizar módulos baseado no papel padrão
+    atualizarModulosPorPapel(form.value.papel)
   }
 })
 
@@ -72,9 +76,89 @@ const descricaoPapel = computed(() => {
   return descricoes[form.value.papel]
 })
 
-// Permissões do papel selecionado
-const permissoesPapel = computed(() => {
-  return PERMISSOES_PADRAO[form.value.papel]
+// Verifica se um módulo tem alguma permissão ativa
+const temAlgumaPermissaoModulo = (modulo: any): boolean => {
+  return Object.values(modulo).some(valor => valor === true)
+}
+
+// Atualizar módulos ao mudar papel
+const atualizarModulosPorPapel = (papel: PapelUsuario) => {
+  const permissoesPadrao = PERMISSOES_PADRAO[papel]
+  form.value.modulos = {
+    atendimento: permissoesPadrao.pedidos.visualizar && permissoesPadrao.pedidos.alterar_status && !permissoesPadrao.pedidos.criar,
+    pedidos: temAlgumaPermissaoModulo(permissoesPadrao.pedidos) && permissoesPadrao.pedidos.criar,
+    cardapio: temAlgumaPermissaoModulo(permissoesPadrao.cardapio),
+    relatorios: temAlgumaPermissaoModulo(permissoesPadrao.relatorios),
+    configuracoes: temAlgumaPermissaoModulo(permissoesPadrao.configuracoes)
+  }
+}
+
+// Watch para atualizar módulos ao mudar papel
+watch(() => form.value.papel, (novoPapel) => {
+  atualizarModulosPorPapel(novoPapel)
+})
+
+// Funções para garantir exclusividade entre Atendimento e Pedidos
+const toggleAtendimento = () => {
+  if (form.value.modulos.atendimento) {
+    form.value.modulos.pedidos = false
+  }
+}
+
+const togglePedidos = () => {
+  if (form.value.modulos.pedidos) {
+    form.value.modulos.atendimento = false
+  }
+}
+
+// Construir permissões finais baseado nos módulos selecionados
+const permissoesFinais = computed(() => {
+  return {
+    pedidos: form.value.modulos.pedidos ? {
+      criar: true,
+      editar: true,
+      excluir: true,
+      visualizar: true,
+      alterar_status: true
+    } : form.value.modulos.atendimento ? {
+      criar: false,
+      editar: false,
+      excluir: false,
+      visualizar: true,
+      alterar_status: true
+    } : {
+      criar: false,
+      editar: false,
+      excluir: false,
+      visualizar: false,
+      alterar_status: false
+    },
+    cardapio: form.value.modulos.cardapio ? {
+      criar_produto: true,
+      editar_produto: true,
+      excluir_produto: true,
+      ativar_desativar: true
+    } : {
+      criar_produto: false,
+      editar_produto: false,
+      excluir_produto: false,
+      ativar_desativar: false
+    },
+    relatorios: form.value.modulos.relatorios ? {
+      visualizar: true,
+      exportar: true
+    } : {
+      visualizar: false,
+      exportar: false
+    },
+    configuracoes: form.value.modulos.configuracoes ? {
+      editar_empresa: true,
+      gerenciar_usuarios: true
+    } : {
+      editar_empresa: false,
+      gerenciar_usuarios: false
+    }
+  }
 })
 
 const salvar = async () => {
@@ -102,22 +186,19 @@ const salvar = async () => {
       nome: form.value.nome,
       email: form.value.email,
       papel: form.value.papel,
-      permissoes: permissoesPapel.value
+      modulos: form.value.modulos,
+      permissoes: permissoesFinais.value
     })
 
     // Buscar empresa_id do usuário logado
-    const { empresaAtual, getEmpresaId } = useEmpresa()
-    
-    // Se não tem empresa no estado, busca
-    let empresaId = empresaAtual.value?.id
-    if (!empresaId) {
-      empresaId = await getEmpresaId()
-    }
+    const { getEmpresaId } = useEmpresa()
+    const empresaId = await getEmpresaId()
     
     if (!empresaId) {
       erro.value = 'Não foi possível identificar a empresa'
-      if (toast.value) {
-        toast.value.error(erro.value)
+      const toast = await useToastSafe()
+      if (toast) {
+        toast.error(erro.value)
       }
       return
     }
@@ -132,7 +213,7 @@ const salvar = async () => {
         email: form.value.email,
         senha: form.value.senha,
         papel: form.value.papel,
-        permissoes: permissoesPapel.value,
+        permissoes: permissoesFinais.value,
         empresaId: empresaId
       }
     })
@@ -141,22 +222,25 @@ const salvar = async () => {
       // Fechar modal
       emit('close')
       
-      if (toast.value) {
-        toast.value.success(`Usuário criado! Email: ${form.value.email} | Senha: ${form.value.senha}`)
+      const toast = await useToastSafe()
+      if (toast) {
+        toast.success(`Usuário criado! Email: ${form.value.email} | Senha: ${form.value.senha}`)
       }
       
       emit('usuarioCriado')
     } else {
       erro.value = response.message || 'Erro ao criar usuário'
-      if (toast.value) {
-        toast.value.error(erro.value)
+      const toast = await useToastSafe()
+      if (toast) {
+        toast.error(erro.value)
       }
     }
   } catch (error: any) {
     console.error('[ModalNovoUsuario] Erro ao criar usuário:', error)
     erro.value = error.message || error.data?.message || 'Erro ao criar usuário'
-    if (toast.value) {
-      toast.value.error(erro.value)
+    const toast = await useToastSafe()
+    if (toast) {
+      toast.error(erro.value)
     }
   } finally {
     salvando.value = false
@@ -195,7 +279,7 @@ const salvar = async () => {
             <div class="flex gap-3">
               <font-awesome-icon icon="exclamation-circle" class="text-red-600 dark:text-red-400 mt-0.5" />
               <div class="text-sm text-red-900 dark:text-red-100">
-                <p class="font-medium">Erro ao enviar convite</p>
+                <p class="font-medium">Erro ao criar usuário</p>
                 <p class="text-xs text-red-700 dark:text-red-300 mt-1">{{ erro }}</p>
               </div>
             </div>
@@ -278,118 +362,99 @@ const salvar = async () => {
             </p>
           </div>
 
-          <!-- Visualização das permissões -->
+          <!-- Seleção de Módulos -->
           <div class="bg-muted/50 rounded-lg p-4">
-            <h3 class="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+            <h3 class="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
               <font-awesome-icon icon="lock" class="text-xs" />
-              Permissões do {{ PAPEL_LABELS[form.papel] }}
+              Módulos de Acesso
             </h3>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <!-- Pedidos -->
-              <div>
-                <p class="text-xs font-medium text-foreground mb-2">Pedidos</p>
-                <div class="space-y-1">
-                  <div class="flex items-center gap-2 text-xs">
-                    <font-awesome-icon
-                      :icon="permissoesPapel.pedidos.criar ? 'check' : 'times'"
-                      :class="permissoesPapel.pedidos.criar ? 'text-green-600' : 'text-red-600'"
-                    />
-                    <span class="text-muted-foreground">Criar</span>
+              <div class="space-y-3">
+                <label class="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border hover:border-primary/50 cursor-pointer transition-colors">
+                  <input
+                    v-model="form.modulos.atendimento"
+                    type="checkbox"
+                    class="mt-1 rounded border-border"
+                    @change="toggleAtendimento"
+                    :disabled="salvando"
+                  />
+                  <div class="flex-1">
+                    <p class="font-medium text-sm text-foreground mb-1">👁️ Atendimento</p>
+                    <p class="text-xs text-muted-foreground">Apenas visualizar pedidos e alterar status (sem criar, editar ou excluir)</p>
                   </div>
-                  <div class="flex items-center gap-2 text-xs">
-                    <font-awesome-icon
-                      :icon="permissoesPapel.pedidos.editar ? 'check' : 'times'"
-                      :class="permissoesPapel.pedidos.editar ? 'text-green-600' : 'text-red-600'"
-                    />
-                    <span class="text-muted-foreground">Editar</span>
-                  </div>
-                  <div class="flex items-center gap-2 text-xs">
-                    <font-awesome-icon
-                      :icon="permissoesPapel.pedidos.visualizar ? 'check' : 'times'"
-                      :class="permissoesPapel.pedidos.visualizar ? 'text-green-600' : 'text-red-600'"
-                    />
-                    <span class="text-muted-foreground">Visualizar</span>
-                  </div>
-                </div>
-              </div>
+                </label>
 
-              <!-- Cardápio -->
-              <div>
-                <p class="text-xs font-medium text-foreground mb-2">Cardápio</p>
-                <div class="space-y-1">
-                  <div class="flex items-center gap-2 text-xs">
-                    <font-awesome-icon
-                      :icon="permissoesPapel.cardapio.criar_produto ? 'check' : 'times'"
-                      :class="permissoesPapel.cardapio.criar_produto ? 'text-green-600' : 'text-red-600'"
-                    />
-                    <span class="text-muted-foreground">Criar Produto</span>
+                <label class="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border hover:border-primary/50 cursor-pointer transition-colors">
+                  <input
+                    v-model="form.modulos.pedidos"
+                    type="checkbox"
+                    class="mt-1 rounded border-border"
+                    @change="togglePedidos"
+                    :disabled="salvando"
+                  />
+                  <div class="flex-1">
+                    <p class="font-medium text-sm text-foreground mb-1">📦 Pedidos Completo</p>
+                    <p class="text-xs text-muted-foreground">Criar, editar, excluir, visualizar e alterar status de pedidos</p>
                   </div>
-                  <div class="flex items-center gap-2 text-xs">
-                    <font-awesome-icon
-                      :icon="permissoesPapel.cardapio.editar_produto ? 'check' : 'times'"
-                      :class="permissoesPapel.cardapio.editar_produto ? 'text-green-600' : 'text-red-600'"
-                    />
-                    <span class="text-muted-foreground">Editar Produto</span>
-                  </div>
-                </div>
-              </div>
+                </label>
 
-              <!-- Relatórios -->
-              <div>
-                <p class="text-xs font-medium text-foreground mb-2">Relatórios</p>
-                <div class="space-y-1">
-                  <div class="flex items-center gap-2 text-xs">
-                    <font-awesome-icon
-                      :icon="permissoesPapel.relatorios.visualizar ? 'check' : 'times'"
-                      :class="permissoesPapel.relatorios.visualizar ? 'text-green-600' : 'text-red-600'"
-                    />
-                    <span class="text-muted-foreground">Visualizar</span>
+                <label class="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border hover:border-primary/50 cursor-pointer transition-colors">
+                  <input
+                    v-model="form.modulos.cardapio"
+                    type="checkbox"
+                    class="mt-1 rounded border-border"
+                    :disabled="salvando"
+                  />
+                  <div class="flex-1">
+                    <p class="font-medium text-sm text-foreground mb-1">🍕 Cardápio</p>
+                    <p class="text-xs text-muted-foreground">Criar, editar, excluir e ativar/desativar produtos</p>
                   </div>
-                  <div class="flex items-center gap-2 text-xs">
-                    <font-awesome-icon
-                      :icon="permissoesPapel.relatorios.exportar ? 'check' : 'times'"
-                      :class="permissoesPapel.relatorios.exportar ? 'text-green-600' : 'text-red-600'"
-                    />
-                    <span class="text-muted-foreground">Exportar</span>
-                  </div>
-                </div>
-              </div>
+                </label>
 
-              <!-- Financeiro -->
-              <div>
-                <p class="text-xs font-medium text-foreground mb-2">Financeiro</p>
-                <div class="space-y-1">
-                  <div class="flex items-center gap-2 text-xs">
-                    <font-awesome-icon
-                      :icon="permissoesPapel.financeiro.visualizar_valores ? 'check' : 'times'"
-                      :class="permissoesPapel.financeiro.visualizar_valores ? 'text-green-600' : 'text-red-600'"
-                    />
-                    <span class="text-muted-foreground">Ver Valores</span>
+                <label class="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border hover:border-primary/50 cursor-pointer transition-colors">
+                  <input
+                    v-model="form.modulos.relatorios"
+                    type="checkbox"
+                    class="mt-1 rounded border-border"
+                    :disabled="salvando"
+                  />
+                  <div class="flex-1">
+                    <p class="font-medium text-sm text-foreground mb-1">📊 Relatórios</p>
+                    <p class="text-xs text-muted-foreground">Visualizar e exportar relatórios</p>
                   </div>
-                  <div class="flex items-center gap-2 text-xs">
-                    <font-awesome-icon
-                      :icon="permissoesPapel.financeiro.gerar_relatorios ? 'check' : 'times'"
-                      :class="permissoesPapel.financeiro.gerar_relatorios ? 'text-green-600' : 'text-red-600'"
-                    />
-                    <span class="text-muted-foreground">Gerar Relatórios</span>
+                </label>
+
+                <label class="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border hover:border-primary/50 cursor-pointer transition-colors">
+                  <input
+                    v-model="form.modulos.configuracoes"
+                    type="checkbox"
+                    class="mt-1 rounded border-border"
+                    :disabled="salvando"
+                  />
+                  <div class="flex-1">
+                    <p class="font-medium text-sm text-foreground mb-1">⚙️ Configurações</p>
+                    <p class="text-xs text-muted-foreground">Editar empresa e gerenciar usuários</p>
                   </div>
-                </div>
+                </label>
               </div>
-            </div>
           </div>
 
           <!-- Aviso -->
           <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <div class="flex gap-3">
-              <font-awesome-icon icon="info-circle" class="text-blue-600 dark:text-blue-400 mt-0.5" />
+              <font-awesome-icon icon="info-circle" class="text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
               <div class="text-sm text-blue-900 dark:text-blue-100">
-                <p class="font-medium mb-1">Como funciona o convite?</p>
-                <p class="text-xs text-blue-700 dark:text-blue-300">
-                  Um link de cadastro será gerado e <strong>copiado automaticamente</strong> para você compartilhar 
-                  com o usuário (via WhatsApp, Telegram, etc). Após criar a senha, ele terá acesso à empresa 
-                  com as permissões definidas.
-                </p>
+                <p class="font-semibold mb-2">Como funciona?</p>
+                <div class="text-xs text-blue-700 dark:text-blue-300 space-y-1.5">
+                  <p>
+                    <strong>1. Escolha o papel:</strong> Define o nível de acesso base do usuário (Proprietário, Gerente, Atendente, etc).
+                  </p>
+                  <p>
+                    <strong>2. Selecione os módulos:</strong> Marque quais funcionalidades esse usuário poderá acessar no sistema.
+                  </p>
+                  <p>
+                    <strong>3. Envie os dados:</strong> Após criar, compartilhe o email e senha provisória com o usuário para que ele possa acessar o sistema.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -413,7 +478,7 @@ const salvar = async () => {
               :class="{ 'animate-spin': salvando }"
               class="mr-2" 
             />
-            {{ salvando ? 'Enviando...' : 'Enviar Convite' }}
+            {{ salvando ? 'Criando...' : 'Criar Usuário' }}
           </AppButton>
         </div>
       </div>

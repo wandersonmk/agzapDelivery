@@ -31,7 +31,6 @@ export const useStorage = () => {
       if (error) {
         console.error('Erro detalhado ao fazer upload:', {
           message: error.message,
-          statusCode: error.statusCode,
           error: error
         })
         throw new Error(`Erro no upload: ${error.message}`)
