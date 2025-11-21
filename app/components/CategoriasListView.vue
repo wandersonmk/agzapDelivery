@@ -406,7 +406,7 @@
                     : 'border-border hover:border-primary/50 text-foreground'
                 ]"
               >
-                <span class="text-xl">🍔</span>
+                <span class="text-xl">🏷️</span>
                 Produto comum
               </button>
               <button
@@ -419,12 +419,12 @@
                     : 'border-border hover:border-orange-300 text-foreground'
                 ]"
               >
-                <span class="text-xl">🍕</span>
-                Produto por tamanho
+                <span class="text-xl">📏</span>
+                Por tamanho
               </button>
             </div>
             <p class="text-xs text-muted-foreground mt-2">
-              {{ formularioProduto.tipo === 'pizza' ? 'Produtos por tamanho têm preços distintos (P, M, G, F)' : 'Produtos comuns têm preço único' }}
+              {{ formularioProduto.tipo === 'pizza' ? 'Por tamanho: preços distintos (P, M, G, F)' : 'Produtos comuns têm preço único' }}
             </p>
           </div>
 
