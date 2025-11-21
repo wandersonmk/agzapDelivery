@@ -32,7 +32,7 @@ export interface Produto {
   nome: string
   preco: number
   descricao: string
-  foto?: string
+  foto?: string | File | null
   categoriaId: string
   ativo: boolean
   tipo: 'comum' | 'pizza'

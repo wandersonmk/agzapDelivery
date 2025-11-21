@@ -24,7 +24,7 @@ export const useComplementos = () => {
   /**
    * Buscar todos os grupos de complementos da empresa
    */
-  const buscarGrupos = async (): Promise<GrupoComplemento[]> => {
+  const buscarGrupos = async (incluirComplementos: boolean = false): Promise<GrupoComplemento[]> => {
     const empresaId = await getEmpresaId()
     if (!empresaId) {
       state.value.error = 'Empresa não identificada'
@@ -37,7 +37,7 @@ export const useComplementos = () => {
 
       const { data, error } = await supabase
         .from('grupos_complementos')
-        .select('*')
+        .select(incluirComplementos ? '*, complementos(*)' : '*')
         .eq('empresa_id', empresaId)
         .order('nome')
 

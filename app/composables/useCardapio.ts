@@ -3,6 +3,7 @@ import type { CardapioState, Categoria, Produto } from '@shared/types/cardapio.t
 export const useCardapio = () => {
   const supabase = useSupabaseClient()
   const { getEmpresaId } = useEmpresa()
+  const { uploadImagem, substituirImagem, removerImagem } = useStorage()
   
   // Estado reativo do cardápio
   const cardapioState = useState<CardapioState>('cardapio', () => ({
@@ -195,6 +196,20 @@ export const useCardapio = () => {
 
     try {
       loading.value = true
+      
+      // Upload da foto se for um arquivo File
+      let fotoUrl = null
+      if (produto.foto instanceof File) {
+        console.log('Upload de foto detectado:', produto.foto.name, produto.foto.type)
+        fotoUrl = await uploadImagem(produto.foto, 'produtos')
+        console.log('URL da foto após upload:', fotoUrl)
+        if (!fotoUrl) {
+          throw new Error('Falha ao fazer upload da foto')
+        }
+      } else if (typeof produto.foto === 'string') {
+        fotoUrl = produto.foto
+      }
+      
       const { data, error: supabaseError } = await supabase
         .from('produtos')
         .insert({
@@ -203,7 +218,7 @@ export const useCardapio = () => {
           nome: produto.nome,
           descricao: produto.descricao,
           preco: produto.preco,
-          foto: produto.foto,
+          foto: fotoUrl,
           tipo: produto.tipo,
           ativo: produto.ativo,
           tamanhos: produto.tamanhos || null,
@@ -222,6 +237,9 @@ export const useCardapio = () => {
       if (toast) {
         toast.success(`Produto "${produto.nome}" adicionado com sucesso!`)
       }
+      
+      // Retornar o produto criado com o ID
+      return data
     } catch (e: any) {
       error.value = e.message
       console.error('Erro ao adicionar produto:', e)
@@ -240,17 +258,41 @@ export const useCardapio = () => {
     try {
       loading.value = true
       
+      // Buscar produto atual para pegar a URL da foto antiga
+      const produtoAtual = produtos.value.find(p => p.id === id)
+      
       // Mapear campos do frontend para o banco
       const updateData: any = {}
       if (dadosAtualizados.nome !== undefined) updateData.nome = dadosAtualizados.nome
       if (dadosAtualizados.descricao !== undefined) updateData.descricao = dadosAtualizados.descricao
       if (dadosAtualizados.preco !== undefined) updateData.preco = dadosAtualizados.preco
-      if (dadosAtualizados.foto !== undefined) updateData.foto = dadosAtualizados.foto
       if (dadosAtualizados.categoriaId !== undefined) updateData.categoria_id = dadosAtualizados.categoriaId
       if (dadosAtualizados.tipo !== undefined) updateData.tipo = dadosAtualizados.tipo
       if (dadosAtualizados.ativo !== undefined) updateData.ativo = dadosAtualizados.ativo
       if (dadosAtualizados.tamanhos !== undefined) updateData.tamanhos = dadosAtualizados.tamanhos
       if (dadosAtualizados.sabores !== undefined) updateData.sabores = dadosAtualizados.sabores
+      
+      // Processar foto se foi atualizada
+      if (dadosAtualizados.foto !== undefined) {
+        if (dadosAtualizados.foto instanceof File) {
+          // Substituir foto: upload nova e deletar antiga
+          const fotoUrl = await substituirImagem(
+            produtoAtual?.foto || null,
+            dadosAtualizados.foto,
+            'produtos'
+          )
+          if (!fotoUrl) {
+            throw new Error('Falha ao fazer upload da nova foto')
+          }
+          updateData.foto = fotoUrl
+        } else if (dadosAtualizados.foto === null && produtoAtual?.foto) {
+          // Se foto foi removida, deletar do storage
+          await removerImagem(produtoAtual.foto)
+          updateData.foto = null
+        } else if (typeof dadosAtualizados.foto === 'string') {
+          updateData.foto = dadosAtualizados.foto
+        }
+      }
 
       const { error: supabaseError } = await supabase
         .from('produtos')
@@ -290,6 +332,10 @@ export const useCardapio = () => {
   const removerProduto = async (id: string) => {
     try {
       loading.value = true
+      
+      // Buscar produto para pegar a URL da foto antes de excluir
+      const produto = produtos.value.find(p => p.id === id)
+      
       // DELETE permanente do banco de dados
       const { error: supabaseError } = await supabase
         .from('produtos')
@@ -297,6 +343,11 @@ export const useCardapio = () => {
         .eq('id', id)
 
       if (supabaseError) throw supabaseError
+      
+      // Remover foto do storage se existir
+      if (produto?.foto) {
+        await removerImagem(produto.foto)
+      }
       
       // Recarregar produtos
       await carregarProdutos()

@@ -107,8 +107,23 @@
               class="rounded-lg p-4 border bg-muted/20"
               :class="produto.ativo ? 'border-border' : 'border-amber-500/30'"
             >
-              <div class="flex items-start justify-between">
-                <div class="flex-1">
+              <div class="flex items-start gap-3">
+                <!-- Foto do Produto -->
+                <div class="w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                  <img 
+                    v-if="produto.foto"
+                    :src="produto.foto" 
+                    :alt="produto.nome"
+                    class="w-full h-full object-cover"
+                    @error="(e) => (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect fill=%22%23e5e7eb%22 width=%22100%22 height=%22100%22/%3E%3Ctext fill=%22%239ca3af%22 font-size=%2212%22 font-family=%22Arial%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22%3ESem foto%3C/text%3E%3C/svg%3E'"
+                  />
+                  <div v-else class="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-gray-700">
+                    <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Sem foto</span>
+                  </div>
+                </div>
+                
+                <!-- Informações do Produto -->
+                <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 mb-1">
                     <h4 class="font-medium text-foreground">{{ produto.nome }}</h4>
                     <!-- Badge de tipo de produto -->
@@ -151,7 +166,7 @@
                 </div>
                 
                 <!-- Ações do Produto -->
-                <div class="flex items-center space-x-1 ml-4">
+                <div class="flex items-center space-x-1 ml-auto">
                   <button
                     class="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                     title="Editar produto"
@@ -392,7 +407,7 @@
                 ]"
               >
                 <span class="text-xl">🍔</span>
-                Produto Comum
+                Produto comum
               </button>
               <button
                 type="button"
@@ -405,11 +420,11 @@
                 ]"
               >
                 <span class="text-xl">🍕</span>
-                Pizza
+                Produto por tamanho
               </button>
             </div>
             <p class="text-xs text-muted-foreground mt-2">
-              {{ formularioProduto.tipo === 'pizza' ? 'Pizzas têm preços por tamanho (P, M, G, F)' : 'Produtos comuns têm preço único' }}
+              {{ formularioProduto.tipo === 'pizza' ? 'Produtos por tamanho têm preços distintos (P, M, G, F)' : 'Produtos comuns têm preço único' }}
             </p>
           </div>
 
@@ -433,17 +448,17 @@
             </div>
           </div>
 
-          <!-- Preços por Tamanho (Pizza) -->
+          <!-- Preços por tamanho -->
           <div v-if="formularioProduto.tipo === 'pizza'" class="space-y-3">
             <label class="block text-sm font-medium text-foreground mb-2">
-              Preços por Tamanho *
+              Preços por tamanho *
             </label>
             
             <div class="grid grid-cols-2 gap-3">
               <!-- Tamanho P -->
               <div>
                 <label class="block text-xs font-medium text-muted-foreground mb-1">
-                  Pequena (P) - 4 fatias
+                  Pequena (P)
                 </label>
                 <div class="relative">
                   <span class="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">R$</span>
@@ -461,7 +476,7 @@
               <!-- Tamanho M -->
               <div>
                 <label class="block text-xs font-medium text-muted-foreground mb-1">
-                  Média (M) - 6 fatias
+                  Média (M)
                 </label>
                 <div class="relative">
                   <span class="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">R$</span>
@@ -479,7 +494,7 @@
               <!-- Tamanho G -->
               <div>
                 <label class="block text-xs font-medium text-muted-foreground mb-1">
-                  Grande (G) - 8 fatias
+                  Grande (G)
                 </label>
                 <div class="relative">
                   <span class="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">R$</span>
@@ -497,7 +512,7 @@
               <!-- Tamanho F -->
               <div>
                 <label class="block text-xs font-medium text-muted-foreground mb-1">
-                  Família (F) - 8 fatias
+                  Família (F)
                 </label>
                 <div class="relative">
                   <span class="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">R$</span>
@@ -515,7 +530,7 @@
 
             <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
               <p class="text-xs text-blue-800 dark:text-blue-400">
-                💡 <strong>Dica:</strong> Configure os 4 preços para que os clientes possam escolher o tamanho ideal na hora do pedido.
+                💡 <strong>Dica:</strong> Defina o preço de cada tamanho (P, M, G, F) para que clientes escolham na hora do pedido.
               </p>
             </div>
           </div>
@@ -532,10 +547,15 @@
                 class="p-3 bg-muted/20 border border-border rounded-lg"
               >
                 <div class="flex items-center gap-3">
-                  <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <font-awesome-icon icon="file-alt" class="w-6 h-6 text-primary" />
+                  <div class="w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                    <img 
+                      :src="produtoEditando.foto" 
+                      alt="Foto do produto"
+                      class="w-full h-full object-cover"
+                      @error="(e) => (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect fill=%22%23e5e7eb%22 width=%22100%22 height=%22100%22/%3E%3Ctext fill=%22%239ca3af%22 font-size=%2214%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22%3ESem foto%3C/text%3E%3C/svg%3E'"
+                    />
                   </div>
-                  <div class="flex-1">
+                  <div class="flex-1 min-w-0">
                     <p class="text-sm font-medium text-foreground">Foto atual do produto</p>
                     <p class="text-xs text-muted-foreground">Selecione uma nova foto para substituir</p>
                   </div>
@@ -583,50 +603,47 @@
             </div>
           </div>
 
-          <!-- Grupos de Complementos -->
+          <!-- Grupos de Complementos - Resumo Compacto -->
           <div v-if="gruposDisponiveis.length > 0" class="space-y-3">
             <label class="block text-sm font-medium text-foreground">
               Complementos e Adicionais
             </label>
-            <p class="text-xs text-muted-foreground mb-3">
-              Selecione os grupos de complementos que estarão disponíveis para este produto
-            </p>
             
-            <div class="space-y-2 max-h-48 overflow-y-auto p-3 bg-muted/10 border border-border rounded-lg">
-              <label
-                v-for="grupo in gruposDisponiveis.filter(g => g.ativo)"
-                :key="grupo.id"
-                class="flex items-start gap-3 p-2 hover:bg-muted/30 rounded-lg cursor-pointer transition-colors"
-              >
-                <input
-                  type="checkbox"
-                  :value="grupo.id"
-                  v-model="formularioProduto.grupos_ids"
-                  class="mt-1 rounded border-border"
-                />
-                <div class="flex-1">
-                  <p class="text-sm font-medium text-foreground">{{ grupo.nome }}</p>
-                  <p v-if="grupo.descricao" class="text-xs text-muted-foreground">{{ grupo.descricao }}</p>
-                  <div class="flex items-center gap-2 mt-1">
-                    <span v-if="grupo.obrigatorio" class="text-xs px-1.5 py-0.5 bg-red-500/20 text-red-700 dark:text-red-300 rounded">
-                      Obrigatório
-                    </span>
-                    <span v-if="grupo.min_opcoes > 0" class="text-xs text-muted-foreground">
-                      Mín: {{ grupo.min_opcoes }}
-                    </span>
-                    <span v-if="grupo.max_opcoes" class="text-xs text-muted-foreground">
-                      Máx: {{ grupo.max_opcoes }}
-                    </span>
-                  </div>
+            <!-- Resumo dos grupos selecionados -->
+            <div v-if="formularioProduto.grupos_ids && formularioProduto.grupos_ids.length > 0" class="space-y-2 p-3 bg-muted/10 border border-border rounded-lg">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-medium text-muted-foreground">{{ formularioProduto.grupos_ids.length }} grupo(s) selecionado(s)</span>
+              </div>
+              <div class="space-y-1">
+                <div
+                  v-for="grupoId in formularioProduto.grupos_ids"
+                  :key="grupoId"
+                  class="flex items-center justify-between text-xs py-1.5 px-2 bg-primary/10 rounded"
+                >
+                  <span class="font-medium text-foreground">
+                    {{ gruposDisponiveis.find(g => g.id === grupoId)?.nome || 'Grupo não encontrado' }}
+                  </span>
+                  <span class="text-muted-foreground">
+                    {{ (gruposDisponiveis.find(g => g.id === grupoId)?.complementos || []).filter(c => c.ativo).length }} itens
+                  </span>
                 </div>
-              </label>
-
-              <div v-if="gruposDisponiveis.filter(g => g.ativo).length === 0" class="text-center py-4 text-muted-foreground text-sm">
-                Nenhum grupo de complementos disponível.
-                <br>
-                <span class="text-xs">Crie grupos na aba "Complementos e Adicionais"</span>
               </div>
             </div>
+            
+            <!-- Mensagem quando nenhum grupo selecionado -->
+            <div v-else class="p-3 bg-muted/10 border border-dashed border-border rounded-lg text-center">
+              <p class="text-xs text-muted-foreground">Nenhum grupo de complementos selecionado</p>
+            </div>
+            
+            <!-- Botão para abrir modal de gerenciamento -->
+            <button
+              type="button"
+              @click="abrirModalComplementos"
+              class="w-full py-2 px-4 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+            >
+              <font-awesome-icon icon="cog" class="w-4 h-4" />
+              Gerenciar Complementos
+            </button>
           </div>
 
           <!-- Status -->
@@ -725,6 +742,183 @@
       </div>
     </div>
   </div>
+
+  <!-- Modal Secundário: Gerenciar Complementos -->
+  <div
+    v-if="modalComplementosAberto"
+    @click.self="fecharModalComplementos"
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
+  >
+    <div class="bg-card rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+      <!-- Cabeçalho do Modal -->
+      <div class="flex items-center justify-between p-6 border-b border-border">
+        <div>
+          <h2 class="text-xl font-bold text-foreground">Selecionar Grupos de Complementos</h2>
+          <p class="text-sm text-muted-foreground mt-1">
+            Escolha quais grupos estarão disponíveis para este produto
+          </p>
+        </div>
+        <button
+          @click="fecharModalComplementos"
+          class="text-muted-foreground hover:text-foreground transition-colors p-2 hover:bg-muted/20 rounded-lg"
+        >
+          <font-awesome-icon icon="times" class="w-5 h-5" />
+        </button>
+      </div>
+
+      <!-- Barra de Busca -->
+      <div class="p-6 border-b border-border">
+        <div class="relative">
+          <font-awesome-icon icon="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            v-model="buscaGrupos"
+            type="text"
+            placeholder="Buscar grupos ou complementos..."
+            class="w-full pl-10 pr-4 py-2.5 bg-muted/20 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-muted-foreground"
+          />
+        </div>
+      </div>
+
+      <!-- Lista de Grupos (Scrollable) -->
+      <div class="flex-1 overflow-y-auto p-6 max-h-[60vh]">
+        <div v-if="gruposFiltrados.length === 0" class="text-center py-12">
+          <font-awesome-icon icon="search" class="w-12 h-12 text-muted-foreground/50 mb-3" />
+          <p class="text-muted-foreground">
+            {{ buscaGrupos.trim() ? 'Nenhum grupo encontrado' : 'Nenhum grupo disponível' }}
+          </p>
+          <p class="text-xs text-muted-foreground mt-1">
+            {{ buscaGrupos.trim() ? 'Tente buscar com outros termos' : 'Crie grupos na aba "Complementos e Adicionais"' }}
+          </p>
+        </div>
+
+        <div v-else class="space-y-3">
+          <div
+            v-for="grupo in gruposFiltrados"
+            :key="grupo.id"
+            class="border border-border rounded-lg overflow-hidden"
+            :class="gruposSelecionadosTemp.includes(grupo.id) ? 'bg-primary/5 border-primary/30' : 'bg-card'"
+          >
+            <!-- Cabeçalho do Grupo (Checkbox + Nome + Badges + Expand) -->
+            <div class="p-4">
+              <div class="flex items-start gap-3">
+                <!-- Checkbox -->
+                <input
+                  type="checkbox"
+                  :value="grupo.id"
+                  v-model="gruposSelecionadosTemp"
+                  :id="`grupo-${grupo.id}`"
+                  class="mt-1 rounded border-border cursor-pointer"
+                />
+                
+                <!-- Informações do Grupo -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-start justify-between gap-2">
+                    <div class="flex-1 min-w-0">
+                      <label :for="`grupo-${grupo.id}`" class="cursor-pointer">
+                        <h3 class="text-sm font-semibold text-foreground">{{ grupo.nome }}</h3>
+                        <p v-if="grupo.descricao" class="text-xs text-muted-foreground mt-0.5">{{ grupo.descricao }}</p>
+                      </label>
+                    </div>
+                    
+                    <!-- Badges -->
+                    <div class="flex items-center gap-1.5 flex-shrink-0">
+                      <span v-if="grupo.obrigatorio" class="text-xs px-2 py-0.5 bg-red-500/20 text-red-700 dark:text-red-300 rounded-full whitespace-nowrap">
+                        Obrigatório
+                      </span>
+                      <span v-if="grupo.min_opcoes > 0 || grupo.max_opcoes" class="text-xs px-2 py-0.5 bg-blue-500/20 text-blue-700 dark:text-blue-300 rounded-full whitespace-nowrap">
+                        {{ grupo.min_opcoes > 0 ? `Mín: ${grupo.min_opcoes}` : '' }}
+                        {{ grupo.min_opcoes > 0 && grupo.max_opcoes ? ' | ' : '' }}
+                        {{ grupo.max_opcoes ? `Máx: ${grupo.max_opcoes}` : '' }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Contador de complementos + botão expandir -->
+                  <div class="flex items-center gap-2 mt-2">
+                    <span class="text-xs text-muted-foreground">
+                      {{ grupo.complementos?.filter(c => c.ativo).length || 0 }} 
+                      {{ (grupo.complementos?.filter(c => c.ativo).length || 0) === 1 ? 'complemento' : 'complementos' }}
+                    </span>
+                    
+                    <button
+                      @click="toggleGrupoExpansaoModal(grupo.id)"
+                      class="text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+                    >
+                      <span>{{ gruposExpandidosModal.has(grupo.id) ? 'Ocultar' : 'Ver' }} itens</span>
+                      <font-awesome-icon 
+                        :icon="gruposExpandidosModal.has(grupo.id) ? 'chevron-up' : 'chevron-down'" 
+                        class="w-3 h-3" 
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lista de Complementos (Accordion) -->
+            <div
+              v-if="gruposExpandidosModal.has(grupo.id)"
+              class="border-t border-border"
+            >
+              <!-- Se o grupo estiver selecionado, mostra o editor completo -->
+              <div v-if="gruposSelecionadosTemp.includes(grupo.id)" class="p-4 bg-muted/10">
+                <GrupoComplementoEditor
+                  :grupo="grupo"
+                  @atualizar="recarregarGrupos"
+                />
+              </div>
+              
+              <!-- Se não estiver selecionado, mostra apenas a lista de complementos -->
+              <div v-else class="p-4 bg-muted/5">
+                <div v-if="grupo.complementos && grupo.complementos.length > 0" class="space-y-1.5">
+                  <div
+                    v-for="complemento in grupo.complementos.filter(c => c.ativo)"
+                    :key="complemento.id"
+                    class="flex items-center justify-between text-xs py-2 px-3 rounded transition-colors"
+                    :class="complementoMatchBusca(complemento) 
+                      ? 'bg-yellow-500/20 border border-yellow-500/50' 
+                      : 'bg-card hover:bg-muted/20'"
+                  >
+                    <span class="text-foreground font-medium">{{ complemento.nome }}</span>
+                    <span class="font-semibold" :class="complemento.preco > 0 ? 'text-primary' : 'text-muted-foreground'">
+                      {{ complemento.preco > 0 ? `+R$ ${complemento.preco.toFixed(2).replace('.', ',')}` : 'Grátis' }}
+                    </span>
+                  </div>
+                </div>
+                <div v-else class="text-center py-4 text-muted-foreground text-xs">
+                  Nenhum complemento ativo neste grupo
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer: Ações -->
+      <div class="p-6 border-t border-border flex items-center justify-between">
+        <div class="text-sm text-muted-foreground">
+          <span class="font-semibold text-foreground">{{ gruposSelecionadosTemp.length }}</span> 
+          {{ gruposSelecionadosTemp.length === 1 ? 'grupo selecionado' : 'grupos selecionados' }}
+        </div>
+        
+        <div class="flex gap-3">
+          <button
+            @click="fecharModalComplementos"
+            class="px-4 py-2 text-muted-foreground hover:text-foreground border border-border rounded-lg hover:bg-muted/10 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            @click="aplicarSelecaoComplementos"
+            class="px-5 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 font-medium"
+          >
+            <font-awesome-icon icon="check" class="w-4 h-4" />
+            Aplicar Seleção
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -745,9 +939,107 @@ const { adicionarProduto, editarProduto: editarProdutoCardapio, removerProduto }
 const { buscarGrupos, atualizarGruposDoProduto, buscarGruposDoProduto } = useComplementos()
 const gruposDisponiveis = ref<GrupoComplemento[]>([])
 
-// Carregar grupos ao montar
+// Estados do modal secundário de complementos
+const modalComplementosAberto = ref(false)
+const buscaGrupos = ref('')
+const gruposSelecionadosTemp = ref<string[]>([])
+const gruposExpandidosModal = ref<Set<string>>(new Set())
+
+// Carregar grupos ao montar (COM os complementos)
 onMounted(async () => {
-  gruposDisponiveis.value = await buscarGrupos()
+  gruposDisponiveis.value = await buscarGrupos(true)
+})
+
+// Função helper para normalizar texto (remove acentos e converte para minúsculas)
+const normalizarTexto = (texto: string): string => {
+  if (!texto) return ''
+  try {
+    return texto
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+  } catch (error) {
+    console.warn('Erro ao normalizar texto:', error)
+    return texto.toLowerCase()
+  }
+}
+
+// Computed para filtrar grupos pela busca
+const gruposFiltrados = computed(() => {
+  const termo = normalizarTexto(buscaGrupos.value.trim())
+  
+  let grupos = gruposDisponiveis.value.filter(g => g.ativo)
+  
+  // Se houver busca, filtrar
+  if (termo) {
+    grupos = grupos.filter(g => {
+      const nomeMatch = normalizarTexto(g.nome).includes(termo)
+      const descricaoMatch = g.descricao ? normalizarTexto(g.descricao).includes(termo) : false
+      const complementosMatch = g.complementos?.some(c => normalizarTexto(c.nome).includes(termo))
+      
+      return nomeMatch || descricaoMatch || complementosMatch
+    })
+    
+    // Auto-expandir grupos que têm resultados
+    nextTick(() => {
+      grupos.forEach(grupo => {
+        if (grupo.complementos?.some(c => c.nome.toLowerCase().includes(termo))) {
+          gruposExpandidosModal.value.add(grupo.id)
+        }
+      })
+    })
+  }
+  
+  // Ordenar: selecionados primeiro, depois ordem alfabética
+  return grupos.sort((a, b) => {
+    const aEhSelecionado = gruposSelecionadosTemp.value.includes(a.id)
+    const bEhSelecionado = gruposSelecionadosTemp.value.includes(b.id)
+    
+    // Se um está selecionado e outro não, o selecionado vem primeiro
+    if (aEhSelecionado && !bEhSelecionado) return -1
+    if (!aEhSelecionado && bEhSelecionado) return 1
+    
+    // Se ambos têm o mesmo status de seleção, ordenar alfabeticamente
+    return a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' })
+  })
+})
+
+// Função para alternar expansão de grupo
+const toggleGrupoExpansaoModal = (grupoId: string) => {
+  if (gruposExpandidosModal.value.has(grupoId)) {
+    gruposExpandidosModal.value.delete(grupoId)
+  } else {
+    gruposExpandidosModal.value.add(grupoId)
+  }
+}
+
+// Verificar se complemento corresponde à busca (para highlight)
+const complementoMatchBusca = (complemento: { nome: string }) => {
+  const termo = buscaGrupos.value.trim().toLowerCase()
+  return termo && complemento.nome.toLowerCase().includes(termo)
+}
+
+// Função para recarregar grupos após edição
+const recarregarGrupos = async () => {
+  gruposDisponiveis.value = await buscarGrupos(true)
+}
+
+// Watch para limpar expansões quando limpar a busca
+watch(buscaGrupos, (novoValor) => {
+  if (!novoValor.trim()) {
+    gruposExpandidosModal.value.clear()
+  }
+})
+
+// Watch para auto-expandir grupos quando são selecionados
+watch(gruposSelecionadosTemp, (novosGrupos, gruposAntigos) => {
+  // Encontrar grupos que foram adicionados
+  const gruposAdicionados = novosGrupos.filter(id => !gruposAntigos?.includes(id))
+  
+  // Expandir automaticamente os grupos recém-selecionados
+  gruposAdicionados.forEach(grupoId => {
+    gruposExpandidosModal.value.add(grupoId)
+  })
 })
 
 // Estado para controlar quais categorias estão abertas/expandidas
@@ -872,7 +1164,8 @@ const resetarFormularioProduto = () => {
     preco: 0,
     tipo: 'comum',
     ativo: true,
-    foto: null
+    foto: null,
+    grupos_ids: []
   }
   precoFormatado.value = ''
   precosTamanhos.value = { P: '', M: '', G: '', F: '' }
@@ -948,8 +1241,8 @@ const salvarNovoProduto = async () => {
       descricao: formularioProduto.value.descricao.trim(),
       tipo: formularioProduto.value.tipo,
       ativo: formularioProduto.value.ativo,
-      // Manter a foto existente se não foi alterada, ou usar nova se foi
-      foto: formularioProduto.value.foto ? 'foto-produto-' + Date.now() + '.jpg' : produtoEditando.value.foto
+      // Se selecionou nova foto (File), passa o File. Se não, mantém URL existente
+      foto: formularioProduto.value.foto || produtoEditando.value.foto
     }
     
     // Se for pizza, construir array de tamanhos JSONB
@@ -987,7 +1280,7 @@ const salvarNovoProduto = async () => {
       categoriaId: categoriaSelecionada.value.id,
       tipo: formularioProduto.value.tipo,
       ativo: formularioProduto.value.ativo,
-      foto: formularioProduto.value.foto ? 'foto-produto-' + Date.now() + '.jpg' : undefined
+      foto: formularioProduto.value.foto || null
     }
     
     // Se for pizza, construir array de tamanhos JSONB
@@ -1147,6 +1440,46 @@ const editarProduto = async (produto: Produto) => {
 const excluirProduto = (produto: Produto) => {
   produtoExcluindo.value = produto
   modalExclusaoProdutoAberto.value = true
+}
+
+// Funções do modal secundário de complementos
+const abrirModalComplementos = () => {
+  // Copiar seleção atual para temporária
+  gruposSelecionadosTemp.value = [...formularioProduto.value.grupos_ids]
+  // Limpar busca
+  buscaGrupos.value = ''
+  // Abrir modal
+  modalComplementosAberto.value = true
+}
+
+const fecharModalComplementos = () => {
+  modalComplementosAberto.value = false
+  // Limpar estados
+  gruposSelecionadosTemp.value = []
+  buscaGrupos.value = ''
+  gruposExpandidosModal.value.clear()
+}
+
+const aplicarSelecaoComplementos = async () => {
+  // Validar grupos selecionados
+  const gruposInvalidos = gruposSelecionadosTemp.value
+    .map(grupoId => gruposDisponiveis.value.find(g => g.id === grupoId))
+    .filter(grupo => grupo && grupo.obrigatorio && grupo.min_opcoes === 0)
+  
+  if (gruposInvalidos.length > 0) {
+    // Mostrar toast de erro
+    const toast = await useToastSafe()
+    if (toast) {
+      const nomes = gruposInvalidos.map(g => `"${g!.nome}"`).join(', ')
+      toast.error(`Grupos obrigatórios devem ter quantidade mínima de pelo menos 1: ${nomes}`)
+    }
+    return // Não permite aplicar
+  }
+  
+  // Aplicar seleção temporária ao formulário
+  formularioProduto.value.grupos_ids = [...gruposSelecionadosTemp.value]
+  // Fechar modal
+  fecharModalComplementos()
 }
 
 // Funções do modal de exclusão de produto
