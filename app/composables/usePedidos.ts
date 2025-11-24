@@ -13,6 +13,7 @@ interface PedidoSupabase {
   telefone_cliente: string
   endereco_entrega?: string
   pedido: string
+  itens_json?: any[] // Novo campo JSON estruturado com os itens
   observacao?: string
   valor_total: string
   valor_entrega: string
@@ -90,9 +91,26 @@ export const usePedidos = () => {
 
   // Função para converter pedido do Supabase para o formato da interface
   const convertSupabasePedido = (pedidoSupabase: PedidoSupabase): Pedido => {
-    // Parse do campo "pedido" para extrair itens
-    const items: PedidoItem[] = []
-    const pedidoText = pedidoSupabase.pedido
+    let items: PedidoItem[] = []
+    
+    console.log('[convertSupabasePedido] Pedido #' + pedidoSupabase.numero_pedido, {
+      itens_json: pedidoSupabase.itens_json,
+      pedido_text: pedidoSupabase.pedido
+    })
+    
+    // Priorizar itens_json se existir (novo formato estruturado)
+    if (pedidoSupabase.itens_json && Array.isArray(pedidoSupabase.itens_json)) {
+      items = pedidoSupabase.itens_json.map((item: any) => ({
+        nome: item.nome,
+        quantidade: item.quantidade,
+        preco: item.preco,
+        observacao: item.observacao
+      }))
+      
+      console.log('[convertSupabasePedido] Itens convertidos de itens_json:', items)
+    } else {
+      // Fallback: Parse do campo "pedido" (string) para extrair itens (formato antigo)
+      const pedidoText = pedidoSupabase.pedido
     
     // Parse suporta quebras de linha OU vírgula seguida de "Nx " (para não quebrar em vírgulas de preço)
     const itemsTexto = pedidoText
@@ -150,6 +168,7 @@ export const usePedidos = () => {
         }
       }
     })
+    } // Fecha o else do itens_json
 
     return {
       id: pedidoSupabase.id,

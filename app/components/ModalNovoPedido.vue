@@ -70,41 +70,216 @@
                 <span class="text-sm text-muted-foreground">{{ itensPedido.length }} item(ns)</span>
               </div>
               
-              <!-- Botão Pizza ou Outros Produtos -->
-              <div class="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  @click="iniciarPedidoPizza"
-                  :class="[
-                    'px-4 py-3 border-2 rounded-lg transition-all font-medium flex items-center justify-center gap-2',
-                    etapaPizza > 0 ? 'border-orange-500 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400' : 'border-border hover:border-orange-300 text-foreground'
-                  ]"
+              <!-- Categoria -->
+              <div>
+                <label class="block text-sm font-medium text-foreground mb-1">
+                  Categoria
+                </label>
+                <select
+                  v-model="categoriaSelecionada"
+                  @change="limparSelecaoProduto"
+                  class="w-full px-3 py-2 bg-secondary border border-input rounded-md text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/>
-                  </svg>
-                  🍕 Adicionar Pizza
-                </button>
+                  <option value="">Todas as categorias</option>
+                  <option v-for="cat in categorias" :key="cat.id" :value="cat.id">
+                    {{ cat.nome }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Busca de Produto -->
+              <div>
+                <label class="block text-sm font-medium text-foreground mb-1">
+                  Buscar Produto
+                </label>
+                <div class="relative">
+                  <div class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                  </div>
+                  <input
+                    v-model="buscaProduto"
+                    type="text"
+                    placeholder="Digite para buscar produto..."
+                    @focus="mostrarListaProdutos = true"
+                    class="w-full pl-10 pr-3 py-2 bg-secondary border border-input rounded-md text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
                 
+                <!-- Lista de Produtos Filtrados -->
+                <div
+                  v-if="mostrarListaProdutos && produtosFiltradosBusca.length > 0"
+                  class="mt-2 max-h-60 overflow-y-auto bg-card border border-border rounded-lg shadow-lg"
+                >
+                  <button
+                    v-for="prod in produtosFiltradosBusca"
+                    :key="prod.id"
+                    type="button"
+                    @click="selecionarProduto(prod)"
+                    class="w-full px-4 py-3 text-left hover:bg-muted transition-colors border-b border-border last:border-b-0 relative"
+                  >
+                    <!-- Badge de Promoção -->
+                    <div v-if="prod.promocao_ativa && prod.preco_promocional" class="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full font-medium">
+                      Promoção
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                      <div class="flex-1 pr-16">
+                        <p class="text-sm font-medium text-foreground">{{ prod.nome }}</p>
+                        <p class="text-xs text-muted-foreground">{{ getCategoriaName(prod.categoria_id) }}</p>
+                      </div>
+                      
+                      <!-- Preços -->
+                      <div v-if="prod.tipo === 'comum'" class="text-right ml-3">
+                        <div v-if="prod.promocao_ativa && prod.preco_promocional">
+                          <div class="text-xs text-muted-foreground line-through">
+                            R$ {{ formatarValorExibicao(prod.preco) }}
+                          </div>
+                          <div class="text-sm font-bold text-green-600">
+                            R$ {{ formatarValorExibicao(prod.preco_promocional) }}
+                          </div>
+                        </div>
+                        <div v-else class="text-sm font-bold text-primary">
+                          R$ {{ formatarValorExibicao(prod.preco) }}
+                        </div>
+                      </div>
+                      <span v-else class="text-xs text-orange-600 ml-3">
+                        Por tamanho
+                      </span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Produto Selecionado -->
+              <div v-if="produtoSelecionadoObj" class="space-y-3 border border-primary rounded-lg p-4 bg-primary/5">
+                <div class="flex items-start justify-between">
+                  <div class="flex-1">
+                    <h4 class="font-semibold text-foreground">{{ produtoSelecionadoObj.nome }}</h4>
+                    <p class="text-xs text-muted-foreground">{{ getCategoriaName(produtoSelecionadoObj.categoria_id) }}</p>
+                  </div>
+                  <button
+                    type="button"
+                    @click="limparSelecaoProduto"
+                    class="text-muted-foreground hover:text-foreground"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                  </button>
+                </div>
+
+                <!-- Seleção de Tamanho (se for produto tipo pizza/por tamanho) -->
+                <div v-if="produtoSelecionadoObj.tipo === 'pizza' && produtoSelecionadoObj.tamanhos" class="space-y-2">
+                  <label class="block text-sm font-medium text-foreground">
+                    Selecione o Tamanho *
+                  </label>
+                  <div class="grid grid-cols-3 gap-2">
+                    <button
+                      v-for="tamanho in produtoSelecionadoObj.tamanhos"
+                      :key="tamanho.tamanho"
+                      type="button"
+                      @click="tamanhoSelecionado = tamanho.tamanho"
+                      :class="[
+                        'px-3 py-2 border-2 rounded-lg transition-all text-center',
+                        tamanhoSelecionado === tamanho.tamanho
+                          ? 'border-primary bg-primary/10 text-primary font-bold'
+                          : 'border-border hover:border-primary/50 text-foreground'
+                      ]"
+                    >
+                      <div class="text-lg font-bold">{{ tamanho.tamanho }}</div>
+                      <div class="text-xs text-muted-foreground">R$ {{ formatarValorExibicao(tamanho.preco) }}</div>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Preço para produto comum -->
+                <div v-else class="space-y-2">
+                  <!-- Se tiver promoção ativa, mostrar opção de escolher -->
+                  <div v-if="produtoSelecionadoObj.promocao_ativa && produtoSelecionadoObj.preco_promocional" class="space-y-2">
+                    <label class="block text-sm font-medium text-foreground">
+                      Selecione o Preço *
+                    </label>
+                    <div class="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        @click="usarPrecoPromocional = false"
+                        :class="[
+                          'px-3 py-2 border-2 rounded-lg transition-all text-left',
+                          !usarPrecoPromocional
+                            ? 'border-primary bg-primary/10'
+                            : 'border-border hover:border-primary/50'
+                        ]"
+                      >
+                        <div class="text-xs text-muted-foreground">Preço Normal</div>
+                        <div class="text-lg font-bold text-foreground">
+                          R$ {{ formatarValorExibicao(produtoSelecionadoObj.preco) }}
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        @click="usarPrecoPromocional = true"
+                        :class="[
+                          'px-3 py-2 border-2 rounded-lg transition-all text-left relative overflow-hidden',
+                          usarPrecoPromocional
+                            ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                            : 'border-border hover:border-green-500/50'
+                        ]"
+                      >
+                        <div class="absolute top-0 right-0 bg-green-500 text-white text-xs px-2 py-0.5 rounded-bl-lg font-medium">
+                          Promoção
+                        </div>
+                        <div class="text-xs text-muted-foreground">Preço Promocional</div>
+                        <div class="text-lg font-bold text-green-600 dark:text-green-400">
+                          R$ {{ formatarValorExibicao(produtoSelecionadoObj.preco_promocional) }}
+                        </div>
+                        <div class="text-xs text-green-600 dark:text-green-400 font-medium">
+                          Economize R$ {{ formatarValorExibicao(produtoSelecionadoObj.preco - produtoSelecionadoObj.preco_promocional) }}
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Se não tiver promoção, mostrar apenas o preço normal -->
+                  <div v-else class="text-sm">
+                    <span class="text-muted-foreground">Preço:</span>
+                    <span class="text-lg font-bold text-primary ml-2">
+                      R$ {{ formatarValorExibicao(produtoSelecionadoObj.preco) }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Quantidade -->
+                <div>
+                  <label class="block text-sm font-medium text-foreground mb-1">
+                    Quantidade
+                  </label>
+                  <input
+                    v-model.number="quantidadeItem"
+                    type="number"
+                    min="1"
+                    class="w-full px-3 py-2 bg-secondary border border-input rounded-md text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+
+                <!-- Botão Adicionar -->
                 <button
                   type="button"
-                  @click="mostrarOutrosProdutos = true; etapaPizza = 0"
-                  :class="[
-                    'px-4 py-3 border-2 rounded-lg transition-all font-medium flex items-center justify-center gap-2',
-                    mostrarOutrosProdutos && etapaPizza === 0 ? 'border-primary bg-blue-100 dark:bg-blue-900/30 text-primary' : 'border-border hover:border-primary text-foreground'
-                  ]"
+                  @click="adicionarItem"
+                  :disabled="!podeAdicionarItem"
+                  class="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                   </svg>
-                  Outros Produtos
+                  Adicionar ao Pedido
                 </button>
               </div>
 
-              <!-- FLUXO DE PIZZA -->
-              <div v-if="etapaPizza > 0" class="space-y-4 border border-orange-300 dark:border-orange-700 rounded-lg p-4 bg-orange-50 dark:bg-orange-900/10">
-                
-                <!-- Etapa 1: Tipo da Pizza -->
+              <!-- Remove todo fluxo de pizza antigo -->
+              <div v-if="false" class="hidden">
                 <div v-if="etapaPizza === 1">
                   <h4 class="font-semibold text-foreground mb-3 flex items-center gap-2">
                     <span class="flex items-center justify-center w-6 h-6 rounded-full bg-orange-500 text-white text-xs">1</span>
@@ -664,34 +839,8 @@ const produtoSelecionadoObj = ref<any>(null)
 const quantidadeItem = ref(1)
 const buscaProduto = ref('')
 const mostrarListaProdutos = ref(false)
-const mostrarOutrosProdutos = ref(false)
-const buscaSabor = ref('')
-
-// Configuração de Pizza - Novo Fluxo
-const pizzaConfig = ref({
-  tipo: '', // 'doce' ou 'salgada'
-  categoria: '', // 'tradicional', 'especial', 'especial2', 'premium', 'doce'
-  tamanho: '', // 'P', 'M', 'G', 'F'
-  sabores: [] as string[], // IDs dos sabores
-  borda: null as { nome: string, preco: number } | null
-})
-
-// Etapas do fluxo de pizza
-const etapaPizza = ref(0) // 0=nada, 1=tipo, 2=tamanho, 3=sabores, 4=borda
-
-const tamanhosPizza = [
-  { sigla: 'P', nome: 'Pequena', fatias: 4, maxSabores: 2 },
-  { sigla: 'M', nome: 'Média', fatias: 6, maxSabores: 3 },
-  { sigla: 'G', nome: 'Grande', fatias: 8, maxSabores: 3 },
-  { sigla: 'F', nome: 'Família', fatias: 8, maxSabores: 4 }
-]
-
-const bordasDisponiveis = [
-  { nome: 'Sem borda', preco: 0 },
-  { nome: 'Mussarela', preco: 10.00 },
-  { nome: 'Catupiry', preco: 7.00 },
-  { nome: 'Cheddar', preco: 7.00 }
-]
+const tamanhoSelecionado = ref('') // Armazena o tamanho selecionado (P, G, F)
+const usarPrecoPromocional = ref(false) // Se deve usar preço promocional
 
 // Itens do pedido
 interface ItemPedido {
@@ -759,88 +908,20 @@ const trocoCalculado = computed(() => {
   return troco > 0 ? troco : 0
 })
 
-// Categorias que não são pizza
-const categoriasNaoPizza = computed(() => {
-  return categorias.value.filter(c => 
-    !c.nome.toLowerCase().includes('pizza') && 
-    !c.nome.toLowerCase().includes('borda')
-  )
-})
-
-// Sabores filtrados por busca e tipo de pizza
-const saboresFiltrados = computed(() => {
-  if (!pizzaConfig.value.tipo) return []
+// Verificar se pode adicionar item
+const podeAdicionarItem = computed(() => {
+  if (!produtoSelecionadoObj.value || quantidadeItem.value < 1) return false
   
-  // Filtrar pizzas por tipo (doce ou salgada)
-  let sabores = produtos.value.filter(p => {
-    if (p.tipo !== 'pizza') return false
-    
-    // Pegar nome da categoria
-    const categoria = categorias.value.find(c => c.id === p.categoria_id)
-    if (!categoria) return false
-    
-    const nomeCategoria = categoria.nome.toLowerCase()
-    
-    // Filtrar por tipo
-    if (pizzaConfig.value.tipo === 'doce') {
-      return nomeCategoria.includes('doce')
-    } else {
-      return nomeCategoria.includes('pizza') && !nomeCategoria.includes('doce')
-    }
-  })
-  
-  // Adicionar nome da categoria a cada sabor
-  sabores = sabores.map(s => {
-    const cat = categorias.value.find(c => c.id === s.categoria_id)
-    return {
-      ...s,
-      categoria_nome: cat?.nome || ''
-    }
-  })
-  
-  // Filtrar por busca
-  if (buscaSabor.value.trim()) {
-    const busca = buscaSabor.value.toLowerCase().trim()
-    sabores = sabores.filter(s => 
-      s.nome.toLowerCase().includes(busca)
-    )
-  }
-  
-  return sabores
-})
-
-const pizzasDisponiveis = computed(() => {
-  const todasPizzas = produtos.value.filter(p => p.tipo === 'pizza' && p.ativo)
-  
-  // Se não tiver sabores selecionados, mostrar todas
-  if (pizzaConfig.value.sabores.length === 0) {
-    return todasPizzas
-  }
-  
-  // Verificar se o primeiro sabor selecionado é doce ou salgado
-  const primeiroSabor = produtos.value.find(p => p.id === pizzaConfig.value.sabores[0])
-  if (!primeiroSabor) return todasPizzas
-  
-  const isDoce = primeiroSabor.nome.toLowerCase().includes('doce')
-  
-  // Filtrar apenas pizzas da mesma categoria (doce ou salgada)
-  return todasPizzas.filter(p => {
-    const pizzaIsDoce = p.nome.toLowerCase().includes('doce')
-    return pizzaIsDoce === isDoce
-  })
-})
-
-const podAdicionarItem = computed(() => {
-  if (!produtoSelecionadoObj.value) return false
-  
-  // Se for pizza, precisa ter tamanho e pelo menos 1 sabor
+  // Se for produto por tamanho, precisa ter tamanho selecionado
   if (produtoSelecionadoObj.value.tipo === 'pizza') {
-    return pizzaConfig.value.tamanho && pizzaConfig.value.sabores.length > 0
+    return tamanhoSelecionado.value !== ''
   }
   
-  // Se não for pizza, pode adicionar
   return true
 })
+
+// Categorias que não são pizza
+// Computed obsoletos removidos
 
 // Carregar categorias e produtos
 const carregarDados = async () => {
@@ -866,15 +947,25 @@ const carregarDados = async () => {
       .eq('ativo', true)
       .order('nome')
 
-    // Converter preço de string para número
-    produtos.value = (prods || []).map(prod => ({
-      ...prod,
-      preco: typeof prod.preco === 'string' ? parseFloat(prod.preco) : prod.preco
-    }))
+    // Converter preço de string para número (com tratamento de valores inválidos)
+    produtos.value = (prods || []).map(prod => {
+      let preco = 0
+      if (typeof prod.preco === 'string') {
+        preco = parseFloat(prod.preco) || 0
+      } else if (typeof prod.preco === 'number') {
+        preco = prod.preco
+      }
+      
+      return {
+        ...prod,
+        preco
+      }
+    })
     
     console.log('[ModalNovoPedido] Categorias carregadas:', categorias.value.length)
     console.log('[ModalNovoPedido] Produtos carregados:', produtos.value.length)
     console.log('[ModalNovoPedido] Exemplo produto:', produtos.value[0])
+    console.log('[ModalNovoPedido] Produtos com preço 0:', produtos.value.filter(p => p.preco === 0).map(p => p.nome))
   } catch (error) {
     console.error('Erro ao carregar dados:', error)
     toast.error('Erro ao carregar categorias e produtos')
@@ -882,98 +973,7 @@ const carregarDados = async () => {
 }
 
 // Funções do novo fluxo de pizza
-const iniciarPedidoPizza = () => {
-  etapaPizza.value = 1
-  mostrarOutrosProdutos.value = false
-  limparConfigPizza()
-}
-
-const selecionarTipoPizza = (tipo: 'doce' | 'salgada') => {
-  pizzaConfig.value.tipo = tipo
-  etapaPizza.value = 2
-}
-
-const selecionarTamanhoPizza = (tamanho: any) => {
-  pizzaConfig.value.tamanho = tamanho.sigla
-  // Limpar sabores se exceder o máximo permitido
-  if (pizzaConfig.value.sabores.length > tamanho.maxSabores) {
-    pizzaConfig.value.sabores = pizzaConfig.value.sabores.slice(0, tamanho.maxSabores)
-  }
-  etapaPizza.value = 3
-}
-
-const toggleSaborPizza = (sabor: any) => {
-  const index = pizzaConfig.value.sabores.indexOf(sabor.id)
-  if (index > -1) {
-    // Remove sabor
-    pizzaConfig.value.sabores.splice(index, 1)
-  } else {
-    // Adiciona sabor se não exceder o máximo
-    const tamanho = getTamanhoSelecionado()
-    if (tamanho && pizzaConfig.value.sabores.length < tamanho.maxSabores) {
-      pizzaConfig.value.sabores.push(sabor.id)
-    }
-  }
-}
-
-const adicionarPizza = () => {
-  if (!pizzaConfig.value.tamanho || pizzaConfig.value.sabores.length === 0) {
-    toast.error('Selecione o tamanho e pelo menos um sabor')
-    return
-  }
-
-  const tamanho = getTamanhoSelecionado()
-  const valorPizza = calcularValorPizza()
-  const valorBorda = pizzaConfig.value.borda?.preco || 0
-  const valorTotal = valorPizza + valorBorda
-
-  // Buscar sabores selecionados com suas categorias
-  const saboresSelecionados = pizzaConfig.value.sabores.map(id => {
-    const sabor = produtos.value.find(p => p.id === id)
-    if (!sabor) return null
-    const categoria = categorias.value.find(c => c.id === sabor.categoria_id)
-    return {
-      nome: sabor.nome,
-      categoria: categoria?.nome || ''
-    }
-  }).filter(Boolean)
-
-  // Identificar a categoria (usar a do sabor mais caro)
-  const categoriaPizza = saboresSelecionados[0]?.categoria || 'Pizza'
-  
-  // Montar lista de sabores
-  const saboresNomes = saboresSelecionados.map(s => s.nome).join(' + ')
-  
-  let nome = `${categoriaPizza} ${tamanho?.nome} (${tamanho?.fatias} fatias) - ${saboresNomes}`
-  
-  if (pizzaConfig.value.borda && pizzaConfig.value.borda.preco > 0) {
-    nome += ` + Borda ${pizzaConfig.value.borda.nome}`
-  }
-
-  itensPedido.value.push({
-    produto_id: 'pizza_' + Date.now(), // ID temporário
-    nome: nome,
-    quantidade: quantidadeItem.value,
-    preco: valorTotal
-  })
-
-  // Resetar
-  limparConfigPizza()
-  etapaPizza.value = 0
-  quantidadeItem.value = 1
-  toast.success('Pizza adicionada ao pedido!')
-}
-
-const limparConfigPizza = () => {
-  pizzaConfig.value = {
-    tipo: '',
-    categoria: '',
-    tamanho: '',
-    sabores: [],
-    borda: null
-  }
-  buscaSabor.value = ''
-}
+// Funções obsoletas removidas - simplificado para seleção direta de produtos
 
 // Função para formatar o campo troco com máscara de real brasileiro
 const formatarTroco = (event: Event) => {
@@ -992,46 +992,6 @@ const formatarTroco = (event: Event) => {
 }
 
 // Funções auxiliares de pizza
-const getTamanhoSelecionado = () => {
-  return tamanhosPizza.find(t => t.sigla === pizzaConfig.value.tamanho)
-}
-
-const getPrimeiroSaborSelecionado = () => {
-  if (pizzaConfig.value.sabores.length === 0) return null
-  return produtos.value.find(p => p.id === pizzaConfig.value.sabores[0])
-}
-
-const calcularValorPizza = () => {
-  if (!pizzaConfig.value.tamanho || pizzaConfig.value.sabores.length === 0) {
-    return 0
-  }
-
-  // NOVA LÓGICA: O preço vem do sabor mais caro baseado no tamanho selecionado
-  const tamanhoSelecionado = pizzaConfig.value.tamanho
-  
-  // Buscar todos os sabores selecionados
-  const saboresSelecionados = pizzaConfig.value.sabores.map(id => {
-    return produtos.value.find(p => p.id === id)
-  }).filter(Boolean)
-
-  if (saboresSelecionados.length === 0) return 0
-
-  // Pegar o maior preço entre os sabores para o tamanho selecionado
-  const precosDoTamanho = saboresSelecionados.map(sabor => {
-    // Buscar o preço no array de tamanhos (JSONB)
-    if (sabor.tamanhos && Array.isArray(sabor.tamanhos)) {
-      const tamanhoInfo = sabor.tamanhos.find((t: any) => t.tamanho === tamanhoSelecionado)
-      return tamanhoInfo ? Number(tamanhoInfo.preco) : 0
-    }
-    return 0
-  })
-
-  // Retornar o MAIOR preço (não soma!)
-  const maiorPreco = Math.max(...precosDoTamanho)
-  
-  return maiorPreco
-}
-
 // Adicionar item ao pedido
 const adicionarItem = () => {
   if (!produtoSelecionadoObj.value || quantidadeItem.value < 1) return
@@ -1039,17 +999,47 @@ const adicionarItem = () => {
   let nome = produtoSelecionadoObj.value.nome
   let preco = produtoSelecionadoObj.value.preco
 
-  // Se for pizza, calcular o nome e preço correto
-  if (produtoSelecionadoObj.value.tipo === 'pizza') {
-    const tamanho = getTamanhoSelecionado()
-    const saboresNomes = pizzaConfig.value.sabores
-      .map(id => produtos.value.find(p => p.id === id)?.nome)
-      .filter(Boolean)
-      .join(' + ')
+  // Se for produto por tamanho, buscar o preço do tamanho selecionado
+  if (produtoSelecionadoObj.value.tipo === 'pizza' && tamanhoSelecionado.value) {
+    const tamanhoInfo = produtoSelecionadoObj.value.tamanhos?.find(
+      (t: any) => t.tamanho === tamanhoSelecionado.value
+    )
     
-    nome = `Pizza ${tamanho?.nome} (${tamanho?.fatias} fatias) - ${saboresNomes}`
-    preco = calcularValorPizza()
+    if (tamanhoInfo) {
+      nome = `${produtoSelecionadoObj.value.nome} (${tamanhoSelecionado.value})`
+      preco = Number(tamanhoInfo.preco)
+      
+      console.log('[adicionarItem] Produto por tamanho:', {
+        nome,
+        tamanho: tamanhoSelecionado.value,
+        preco,
+        quantidade: quantidadeItem.value
+      })
+    } else {
+      toast.error('Tamanho não encontrado')
+      return
+    }
+  } else {
+    // Produto comum - verificar se deve usar preço promocional
+    if (usarPrecoPromocional.value && 
+        produtoSelecionadoObj.value.promocao_ativa && 
+        produtoSelecionadoObj.value.preco_promocional) {
+      preco = Number(produtoSelecionadoObj.value.preco_promocional)
+      nome = `${nome} (Promoção)`
+      
+      console.log('[adicionarItem] Usando preço promocional:', {
+        nome,
+        precoNormal: produtoSelecionadoObj.value.preco,
+        precoPromocional: preco
+      })
+    }
   }
+
+  console.log('[adicionarItem] Item a ser adicionado:', {
+    nome,
+    preco,
+    quantidade: quantidadeItem.value
+  })
 
   itensPedido.value.push({
     produto_id: produtoSelecionadoObj.value.id,
@@ -1057,6 +1047,8 @@ const adicionarItem = () => {
     quantidade: quantidadeItem.value,
     preco: preco
   })
+
+  toast.success('Item adicionado ao pedido!')
 
   // Resetar seleção
   limparSelecaoProduto()
@@ -1068,6 +1060,13 @@ const selecionarProduto = (produto: any) => {
   buscaProduto.value = ''
   mostrarListaProdutos.value = false
   quantidadeItem.value = 1
+  
+  // Auto-selecionar preço promocional se existir
+  if (produto.promocao_ativa && produto.preco_promocional) {
+    usarPrecoPromocional.value = true
+  } else {
+    usarPrecoPromocional.value = false
+  }
 }
 
 // Limpar seleção de produto
@@ -1076,6 +1075,8 @@ const limparSelecaoProduto = () => {
   produtoSelecionadoObj.value = null
   buscaProduto.value = ''
   mostrarListaProdutos.value = false
+  tamanhoSelecionado.value = ''
+  usarPrecoPromocional.value = false
   quantidadeItem.value = 1
 }
 
@@ -1123,6 +1124,7 @@ const resetForm = () => {
     endereco_entrega: '',
     forma_pagamento: '',
     tipo_retirada: '',
+    tempo_estimado: '30',
     troco: null,
     observacao: ''
   }
@@ -1130,9 +1132,6 @@ const resetForm = () => {
   valorEntregaExibicao.value = '0,00'
   valorEntregaNumero.value = 0
   limparSelecaoProduto()
-  limparConfigPizza()
-  etapaPizza.value = 0
-  mostrarOutrosProdutos.value = false
 }
 
 // Fechar lista ao clicar fora
@@ -1190,30 +1189,61 @@ const criarPedido = async () => {
 
     const proximoNumero = ultimoPedido ? ultimoPedido.numero_pedido + 1 : 1
 
-    // Montar descrição do pedido com preços individuais
+    // Preparar itens do pedido em formato JSON estruturado
+    const itensJSON = itensPedido.value.map(item => ({
+      nome: item.nome,
+      quantidade: item.quantidade,
+      preco: item.preco,
+      produto_id: item.produto_id
+    }))
+
+    console.log('[criarPedido] Itens do pedido:', itensPedido.value)
+    console.log('[criarPedido] Itens JSON para salvar:', itensJSON)
+    console.log('[criarPedido] Valor total:', valorTotalCalculado.value)
+
+    // Montar descrição do pedido (para compatibilidade com pedidos antigos)
     const descricaoPedido = itensPedido.value
       .map(item => `${item.quantidade}x ${item.nome} - R$ ${(item.quantidade * item.preco).toFixed(2)}`)
       .join(', ')
 
+    // Preparar dados do pedido - remover campos undefined
+    const pedidoData: any = {
+      empresa_id: empresaId,
+      numero_pedido: proximoNumero,
+      nome_cliente: form.value.nome_cliente,
+      telefone_cliente: form.value.telefone_cliente,
+      pedido: descricaoPedido,
+      itens_json: itensJSON,
+      valor_total: valorTotalCalculado.value,
+      forma_pagamento: form.value.forma_pagamento,
+      tipo_retirada: form.value.tipo_retirada,
+      tempo_estimado: parseInt(form.value.tempo_estimado),
+      status: 'novo'
+    }
+
+    // Adicionar campos opcionais apenas se tiverem valor
+    if (form.value.endereco_entrega) {
+      pedidoData.endereco_entrega = form.value.endereco_entrega
+    }
+    
+    if (valorEntregaNumero.value && valorEntregaNumero.value > 0) {
+      pedidoData.valor_entrega = valorEntregaNumero.value
+    }
+    
+    if (form.value.troco && form.value.troco > 0) {
+      pedidoData.troco = form.value.troco
+    }
+    
+    if (form.value.observacao) {
+      pedidoData.observacao = form.value.observacao
+    }
+
+    console.log('[criarPedido] Dados finais para inserir:', pedidoData)
+
     // Inserir novo pedido
     const { error } = await supabase
       .from('pedidos')
-      .insert({
-        empresa_id: empresaId,
-        numero_pedido: proximoNumero,
-        nome_cliente: form.value.nome_cliente,
-        telefone_cliente: form.value.telefone_cliente,
-        endereco_entrega: form.value.endereco_entrega || null,
-        pedido: descricaoPedido,
-        valor_total: valorTotalCalculado.value,
-        valor_entrega: valorEntregaNumero.value || null,
-        forma_pagamento: form.value.forma_pagamento,
-        tipo_retirada: form.value.tipo_retirada,
-        tempo_estimado: parseInt(form.value.tempo_estimado),
-        troco: form.value.troco,
-        observacao: form.value.observacao || null,
-        status: 'novo'
-      })
+      .insert(pedidoData)
 
     if (error) {
       console.error('Erro ao criar pedido:', error)

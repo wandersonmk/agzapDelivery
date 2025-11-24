@@ -29,7 +29,11 @@ const form = ref({
   ativo: true,
   tipo: 'comum' as 'comum' | 'pizza',
   sabores: [] as any[],
-  tamanhos: [] as any[]
+  tamanhos: [
+    { tamanho: 'P', preco: 0 },
+    { tamanho: 'G', preco: 0 },
+    { tamanho: 'F', preco: 0 }
+  ] as any[]
 })
 
 // Carregar grupos ao montar
@@ -38,6 +42,16 @@ onMounted(async () => {
   
   // Se está editando, carregar dados
   if (props.produto) {
+    // Inicializar tamanhos se não existir ou estiver vazio
+    let tamanhos = props.produto.tamanhos || []
+    if (tamanhos.length === 0 && props.produto.tipo === 'pizza') {
+      tamanhos = [
+        { tamanho: 'P', preco: 0 },
+        { tamanho: 'G', preco: 0 },
+        { tamanho: 'F', preco: 0 }
+      ]
+    }
+    
     form.value = {
       nome: props.produto.nome,
       preco: props.produto.preco,
@@ -47,7 +61,7 @@ onMounted(async () => {
       ativo: props.produto.ativo,
       tipo: props.produto.tipo,
       sabores: props.produto.sabores || [],
-      tamanhos: props.produto.tamanhos || []
+      tamanhos
     }
     
     // Carregar grupos vinculados
@@ -63,9 +77,24 @@ const titulo = computed(() => props.produto ? 'Editar Produto' : 'Novo Produto')
 
 // Funções
 const salvar = async () => {
-  if (!form.value.nome || !form.value.categoriaId || form.value.preco <= 0) {
+  if (!form.value.nome || !form.value.categoriaId) {
     alert('Preencha todos os campos obrigatórios')
     return
+  }
+
+  // Validar preço para produtos comuns
+  if (form.value.tipo === 'comum' && form.value.preco <= 0) {
+    alert('Preencha o preço do produto')
+    return
+  }
+
+  // Validar preços por tamanho para produtos tipo pizza
+  if (form.value.tipo === 'pizza') {
+    const precosValidos = form.value.tamanhos.every(t => t.preco > 0)
+    if (!precosValidos) {
+      alert('Preencha os preços para todos os tamanhos')
+      return
+    }
   }
 
   const produtoData: Omit<Produto, 'id'> = {
@@ -183,16 +212,105 @@ const toggleGrupo = (grupoId: string) => {
 
           <!-- Tipo de Produto -->
           <div>
-            <label class="block text-sm font-medium text-foreground mb-2">Tipo</label>
-            <div class="flex gap-4">
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input v-model="form.tipo" type="radio" value="comum" class="rounded-full border-border" />
-                <span class="text-foreground">Produto Comum</span>
-              </label>
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input v-model="form.tipo" type="radio" value="pizza" class="rounded-full border-border" />
-                <span class="text-foreground">Pizza (com sabores)</span>
-              </label>
+            <label class="block text-sm font-medium text-foreground mb-2">Tipo de Produto *</label>
+            <div class="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                @click="form.tipo = 'comum'"
+                :class="[
+                  'px-4 py-3 border-2 rounded-lg transition-all text-left',
+                  form.tipo === 'comum'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-primary/50'
+                ]"
+              >
+                <div class="flex items-center gap-2 mb-1">
+                  <font-awesome-icon icon="box" class="text-primary" />
+                  <span class="font-semibold text-foreground">Produto comum</span>
+                </div>
+                <p class="text-xs text-muted-foreground">Produtos comuns têm preço único</p>
+              </button>
+
+              <button
+                type="button"
+                @click="form.tipo = 'pizza'"
+                :class="[
+                  'px-4 py-3 border-2 rounded-lg transition-all text-left',
+                  form.tipo === 'pizza'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-primary/50'
+                ]"
+              >
+                <div class="flex items-center gap-2 mb-1">
+                  <font-awesome-icon icon="ruler" class="text-primary" />
+                  <span class="font-semibold text-foreground">Por tamanho</span>
+                </div>
+                <p class="text-xs text-muted-foreground">Produtos com preços por tamanho (P, G, F)</p>
+              </button>
+            </div>
+          </div>
+
+          <!-- Preços por Tamanho (aparece quando tipo = pizza) -->
+          <div v-if="form.tipo === 'pizza'" class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+            <h4 class="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <font-awesome-icon icon="pizza-slice" class="text-orange-600" />
+              Preços por Tamanho
+            </h4>
+            <p class="text-xs text-muted-foreground mb-4">
+              Configure o preço para cada tamanho disponível. O "Preço Base" acima não será usado.
+            </p>
+            
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-foreground mb-1">
+                  Pequena (P) - 4 fatias
+                </label>
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">R$</span>
+                  <input
+                    v-model.number="form.tamanhos[0].preco"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    class="w-full pl-10 pr-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-foreground mb-1">
+                  Grande (G) - 8 fatias
+                </label>
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">R$</span>
+                  <input
+                    v-model.number="form.tamanhos[1].preco"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    class="w-full pl-10 pr-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-foreground mb-1">
+                  Família (F) - 8 fatias
+                </label>
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">R$</span>
+                  <input
+                    v-model.number="form.tamanhos[2].preco"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    class="w-full pl-10 pr-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
