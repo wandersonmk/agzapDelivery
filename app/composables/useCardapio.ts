@@ -31,7 +31,6 @@ export const useCardapio = () => {
         .from('categorias')
         .select('*')
         .eq('empresa_id', empresaId)
-        .eq('ativa', true)
         .order('ordem', { ascending: true })
 
       if (supabaseError) throw supabaseError
@@ -112,11 +111,19 @@ export const useCardapio = () => {
 
   // Getters
   const categorias = computed(() => {
+    // Retorna TODAS as categorias para administração (sem filtros)
+    return cardapioState.value.categorias
+      .sort((a, b) => a.ordem - b.ordem)
+  })
+  
+  // Getter para categorias públicas (com filtros de ativa e horário)
+  const categoriasPublicas = computed(() => {
     const { categoriaDisponivelAgora } = useDisponibilidade()
     return cardapioState.value.categorias
       .filter(c => c.ativa && categoriaDisponivelAgora(c))
       .sort((a, b) => a.ordem - b.ordem)
   })
+  
   const produtos = computed(() => cardapioState.value.produtos) // Retorna todos os produtos, incluindo inativos
 
   // Funções para categorias
@@ -403,7 +410,8 @@ export const useCardapio = () => {
 
   return {
     // Estado
-    categorias,
+    categorias, // Todas as categorias (para admin)
+    categoriasPublicas, // Categorias filtradas (para página pública)
     produtos,
     loading: readonly(loading),
     error: readonly(error),

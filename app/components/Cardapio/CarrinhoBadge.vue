@@ -1,0 +1,48 @@
+<script setup lang="ts">
+const { carrinho, quantidadeTotal, carrinhoVazio } = useCarrinho()
+
+const mostrarCarrinho = ref(false)
+</script>
+
+<template>
+  <!-- Botão Flutuante -->
+  <button
+    v-if="carrinho && !carrinhoVazio"
+    @click="mostrarCarrinho = true"
+    class="fixed bottom-6 right-6 z-40 bg-orange-500 hover:bg-orange-600 text-white rounded-full shadow-2xl hover:shadow-orange-500/50 transition-all duration-300 flex items-center gap-3 px-6 py-4 group"
+  >
+    <!-- Ícone -->
+    <div class="relative">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+      
+      <!-- Badge de quantidade -->
+      <span 
+        v-if="quantidadeTotal > 0"
+        class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-bounce"
+      >
+        {{ quantidadeTotal }}
+      </span>
+    </div>
+
+    <!-- Texto e valor -->
+    <div class="flex flex-col items-start">
+      <span class="text-xs font-medium opacity-90">Ver carrinho</span>
+      <span class="text-lg font-bold">
+        R$ {{ carrinho?.total.toFixed(2) }}
+      </span>
+    </div>
+
+    <!-- Seta -->
+    <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+    </svg>
+  </button>
+
+  <!-- Drawer do Carrinho -->
+  <CardapioCarrinhoDrawer
+    :aberto="mostrarCarrinho"
+    @fechar="mostrarCarrinho = false"
+  />
+</template>

@@ -1,5 +1,59 @@
 <template>
   <div class="max-w-7xl mx-auto space-y-6">
+    <!-- Link do Cardápio Online -->
+    <div class="bg-gradient-to-r from-orange-500/10 via-orange-500/5 to-transparent border border-orange-500/20 rounded-lg p-6">
+      <div class="flex items-start justify-between gap-4">
+        <div class="flex-1">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-foreground">Link do Cardápio Online</h3>
+              <p class="text-sm text-muted-foreground">Compartilhe este link com seus clientes para receberem pedidos online</p>
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-3">
+            <div class="flex-1 bg-muted/50 border border-border rounded-lg px-4 py-3 font-mono text-sm text-foreground overflow-x-auto">
+              {{ linkCardapio || 'Gerando link...' }}
+            </div>
+            <button
+              @click="copiarLink"
+              :disabled="!linkCardapio"
+              :class="[
+                'px-5 py-3 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 whitespace-nowrap',
+                copiado 
+                  ? 'bg-green-500 text-white' 
+                  : 'bg-orange-500 hover:bg-orange-600 text-white active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed'
+              ]"
+            >
+              <svg v-if="!copiado" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              {{ copiado ? 'Copiado!' : 'Copiar Link' }}
+            </button>
+            <a
+              v-if="linkCardapio"
+              :href="linkCardapio"
+              target="_blank"
+              class="px-5 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-all duration-200 flex items-center gap-2 whitespace-nowrap active:scale-95"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              Visualizar
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Tabs de Navegação -->
     <div class="flex gap-2 border-b border-border">
       <button
@@ -116,18 +170,120 @@
 
 <script setup lang="ts">
 import type { Categoria } from '@shared/types/cardapio.types'
+import { gerarSlugUnico } from '~/utils/slugUtils'
 
 // Composables
 const { categorias, produtos, adicionarCategoria, carregarCardapio } = useCardapio()
+const supabase = useSupabaseClient()
+const { user } = useAuth()
+const toast = useToastSafe()
 
 // Estado da interface
 const mostrarModalCategoria = ref(false)
 const tabAtiva = ref('produtos') // 'produtos' ou 'complementos'
 
+// Link do cardápio
+const linkCardapio = ref('')
+const copiado = ref(false)
+
 // Carregar dados ao montar o componente
 onMounted(async () => {
   await carregarCardapio()
+  
+  // Aguardar user estar disponível com timeout
+  let tentativas = 0
+  while (!user.value?.empresa_id && tentativas < 20) {
+    await new Promise(resolve => setTimeout(resolve, 100))
+    tentativas++
+  }
+  
+  await carregarLinkCardapio()
 })
+
+// Watch para carregar link quando user estiver disponível
+watch(() => user.value?.empresa_id, async (empresaId) => {
+  if (empresaId && !linkCardapio.value) {
+    await carregarLinkCardapio()
+  }
+})
+
+// Buscar/gerar slug da empresa
+const carregarLinkCardapio = async () => {
+  try {
+    // Buscar empresa_id do useEmpresa que já está carregado
+    const { empresaAtual, getEmpresaId } = useEmpresa()
+    
+    // Primeiro tenta pegar da empresaAtual
+    let empresaId = empresaAtual.value?.id
+    
+    // Se não tiver, busca via getEmpresaId
+    if (!empresaId) {
+      console.log('Aguardando empresa carregar...')
+      empresaId = await getEmpresaId()
+    }
+    
+    if (!empresaId) {
+      console.log('Empresa não encontrada, tentando novamente em 500ms...')
+      setTimeout(carregarLinkCardapio, 500)
+      return
+    }
+
+    console.log('Carregando link do cardápio para empresa:', empresaId)
+
+    const { data, error } = await supabase
+      .from('empresas')
+      .select('slug, nome')
+      .eq('id', empresaId)
+      .single()
+
+    if (error) {
+      console.error('Erro ao buscar empresa:', error)
+      return
+    }
+
+    if (data) {
+      // Se não tiver slug, gerar um
+      if (!data.slug) {
+        console.log('Gerando slug para:', data.nome)
+        const novoSlug = await gerarSlugUnico(data.nome, empresaId)
+        
+        const { error: updateError } = await supabase
+          .from('empresas')
+          .update({ slug: novoSlug })
+          .eq('id', empresaId)
+
+        if (updateError) {
+          console.error('Erro ao atualizar slug:', updateError)
+        }
+
+        linkCardapio.value = `${window.location.origin}/cardapio/${novoSlug}`
+        console.log('Link gerado:', linkCardapio.value)
+      } else {
+        linkCardapio.value = `${window.location.origin}/cardapio/${data.slug}`
+        console.log('Link carregado:', linkCardapio.value)
+      }
+    }
+  } catch (err) {
+    console.error('Erro ao carregar link do cardápio:', err)
+  }
+}
+
+// Copiar link
+const copiarLink = async () => {
+  if (!linkCardapio.value) return
+  
+  try {
+    await navigator.clipboard.writeText(linkCardapio.value)
+    copiado.value = true
+    toast?.success('Link copiado para a área de transferência!')
+    setTimeout(() => {
+      copiado.value = false
+    }, 2000)
+  } catch (error) {
+    console.error('Erro ao copiar:', error)
+    toast?.error('Erro ao copiar link')
+  }
+}
 
 // Computed
 const precoMedio = computed(() => {

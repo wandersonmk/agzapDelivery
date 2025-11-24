@@ -1,4 +1,13 @@
 export default defineNuxtRouteMiddleware(async (to, from) => {
+  // Rotas públicas que não precisam de autenticação
+  const rotasPublicas = ['/cardapio']
+  const ehRotaPublica = rotasPublicas.some(rota => to.path.startsWith(rota))
+  
+  if (ehRotaPublica) {
+    console.log('[Auth Middleware] Rota pública, permitindo acesso:', to.path)
+    return
+  }
+  
   // No servidor, não precisa verificar autenticação detalhada
   if (process.server) {
     return

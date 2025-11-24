@@ -1,5 +1,47 @@
 <template>
   <div class="max-w-7xl mx-auto">
+    <!-- Link do Cardápio Online -->
+    <div class="bg-gradient-to-r from-orange-500/10 via-orange-500/5 to-transparent border border-orange-500/20 rounded-lg p-6 mb-8">
+      <div class="flex items-start justify-between gap-4">
+        <div class="flex-1">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-foreground">Link do Cardápio Online</h3>
+              <p class="text-sm text-muted-foreground">Compartilhe este link com seus clientes</p>
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-3">
+            <div class="flex-1 bg-muted/50 border border-border rounded-lg px-4 py-3 font-mono text-sm text-foreground">
+              {{ linkCardapio }}
+            </div>
+            <button
+              @click="copiarLink"
+              :class="[
+                'px-5 py-3 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 whitespace-nowrap',
+                copiado 
+                  ? 'bg-green-500 text-white' 
+                  : 'bg-orange-500 hover:bg-orange-600 text-white active:scale-95'
+              ]"
+            >
+              <svg v-if="!copiado" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              {{ copiado ? 'Copiado!' : 'Copiar Link' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Cards de métricas -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <!-- Card Total de Itens -->
@@ -119,6 +161,58 @@
 </template>
 
 <script setup lang="ts">
+import { gerarSlugUnico } from '~/utils/slugUtils'
+
+const supabase = useSupabaseClient()
+const { user } = useAuth()
+const toast = useToastSafe()
+
+// Link do cardápio
+const linkCardapio = ref('')
+const copiado = ref(false)
+
+// Buscar slug da empresa
+onMounted(async () => {
+  if (!user.value?.empresa_id) return
+
+  const { data } = await supabase
+    .from('empresas')
+    .select('slug, nome')
+    .eq('id', user.value.empresa_id)
+    .single()
+
+  if (data) {
+    // Se não tiver slug, gerar um
+    if (!data.slug) {
+      const novoSlug = await gerarSlugUnico(data.nome, user.value.empresa_id)
+      
+      await supabase
+        .from('empresas')
+        .update({ slug: novoSlug })
+        .eq('id', user.value.empresa_id)
+
+      linkCardapio.value = `${window.location.origin}/cardapio/${novoSlug}`
+    } else {
+      linkCardapio.value = `${window.location.origin}/cardapio/${data.slug}`
+    }
+  }
+})
+
+// Copiar link
+const copiarLink = async () => {
+  try {
+    await navigator.clipboard.writeText(linkCardapio.value)
+    copiado.value = true
+    toast?.success('Link copiado!')
+    setTimeout(() => {
+      copiado.value = false
+    }, 2000)
+  } catch (error) {
+    console.error('Erro ao copiar:', error)
+    toast?.error('Erro ao copiar link')
+  }
+}
+
 // Métricas do cardápio
 const metrics = reactive({
   totalItens: 45,
