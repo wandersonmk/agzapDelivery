@@ -48,19 +48,29 @@ const produtosPromocao = computed(() => {
   return prods
 })
 
-// Categorias visíveis (filtradas por pesquisa, categoria selecionada e que tenham produtos)
-const categoriasVisiveis = computed(() => {
+// Todas as categorias com produtos (para mostrar os botões)
+const categoriasComProdutos = computed(() => {
   // Filtrar categorias que têm pelo menos 1 produto
-  let cats = categorias.value.filter(c => {
+  return categorias.value.filter(c => {
     const produtosCategoria = produtosPorCategoria(c.id)
     return produtosCategoria.length > 0
   })
-  
-  if (categoriaSelecionada.value) {
-    return cats.filter(c => c.id === categoriaSelecionada.value)
-  }
-  return cats
 })
+
+// Categorias a serem exibidas (filtradas pela seleção do usuário)
+const categoriasVisiveis = computed(() => {
+  if (categoriaSelecionada.value) {
+    // Se há categoria selecionada, mostra apenas ela
+    return categoriasComProdutos.value.filter(c => c.id === categoriaSelecionada.value)
+  }
+  // Se não há seleção, mostra todas
+  return categoriasComProdutos.value
+})
+
+// Função para selecionar categoria
+const selecionarCategoria = (categoriaId: string | null) => {
+  categoriaSelecionada.value = categoriaId
+}
 
 // Produtos por categoria
 const produtosPorCategoria = (categoriaId: string) => {
@@ -324,25 +334,52 @@ useHead({
       </div>
 
       <!-- Categorias em Pills -->
-      <div class="max-w-7xl mx-auto px-4 mb-6">
-        <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+      <div class="max-w-7xl mx-auto px-4 mb-6 relative">
+        <!-- Gradiente indicador de scroll à direita -->
+        <div class="absolute right-0 top-0 bottom-2 w-16 bg-gradient-to-l from-white dark:from-gray-900 to-transparent pointer-events-none z-10 flex items-center justify-end pr-2">
+          <div class="animate-bounce-horizontal">
+            <svg class="w-6 h-6 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </div>
+        
+        <div class="flex gap-2 overflow-x-auto overflow-y-hidden pb-2 snap-x snap-mandatory scroll-smooth touch-pan-x scrollbar-hide" style="-webkit-overflow-scrolling: touch;">
           <button
-            @click="categoriaSelecionada = null"
+            @click="selecionarCategoria(null)"
             :class="[
-              'px-5 py-2.5 rounded-full font-medium whitespace-nowrap transition-all',
+              'px-5 py-2.5 rounded-full font-medium whitespace-nowrap transition-all flex-shrink-0 snap-start',
               !categoriaSelecionada
                 ? 'bg-orange-500 text-white shadow-md'
                 : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
             ]"
           >
+            Todas
+          </button>
+          
+          <!-- Botão de Promoções (apenas se houver produtos em promoção) -->
+          <button
+            v-if="produtosPromocao.length > 0"
+            @click="selecionarCategoria('promocoes')"
+            :class="[
+              'px-5 py-2.5 rounded-full font-medium whitespace-nowrap transition-all flex items-center gap-1.5 flex-shrink-0 snap-start',
+              categoriaSelecionada === 'promocoes'
+                ? 'bg-orange-500 text-white shadow-md'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+            ]"
+          >
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+            </svg>
             Promoções
           </button>
+          
           <button
-            v-for="categoria in categoriasVisiveis"
+            v-for="categoria in categoriasComProdutos"
             :key="categoria.id"
-            @click="categoriaSelecionada = categoria.id"
+            @click="selecionarCategoria(categoria.id)"
             :class="[
-              'px-5 py-2.5 rounded-full font-medium whitespace-nowrap transition-all',
+              'px-5 py-2.5 rounded-full font-medium whitespace-nowrap transition-all flex-shrink-0 snap-start',
               categoriaSelecionada === categoria.id
                 ? 'bg-orange-500 text-white shadow-md'
                 : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -371,7 +408,7 @@ useHead({
       <!-- Grid de Produtos -->
       <div class="max-w-7xl mx-auto px-4 pb-32">
         <!-- Seção de Promoções -->
-        <div v-if="produtosPromocao.length > 0 && !categoriaSelecionada" class="mb-10">
+        <div v-if="categoriaSelecionada === 'promocoes' || (!categoriaSelecionada && produtosPromocao.length > 0)" class="mb-10">
           <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
             <svg class="w-8 h-8 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
               <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
@@ -392,7 +429,7 @@ useHead({
         </div>
 
         <!-- Produtos por Categoria -->
-        <div v-for="categoria in categoriasVisiveis" :key="categoria.id" class="mb-10">
+        <div v-if="categoriaSelecionada !== 'promocoes'" v-for="categoria in categoriasVisiveis" :key="categoria.id" class="mb-10">
           <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 uppercase">
             {{ categoria.nome }}
           </h2>
@@ -419,3 +456,31 @@ useHead({
     </template>
   </div>
 </template>
+
+<style scoped>
+/* Esconder scrollbar mas manter funcionalidade */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Animação de bounce horizontal para indicar scroll */
+@keyframes bounce-horizontal {
+  0%, 100% {
+    transform: translateX(0);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: translateX(25%);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+.animate-bounce-horizontal {
+  animation: bounce-horizontal 1s infinite;
+}
+</style>
