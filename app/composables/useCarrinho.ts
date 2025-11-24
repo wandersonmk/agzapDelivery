@@ -182,6 +182,7 @@ export const useCarrinho = () => {
     limparCarrinho,
     calcularTotais,
     podeFinalizarPedido,
-    verificarMudancaPreco
+    verificarMudancaPreco,
+    carregarCarrinho
   }
 }

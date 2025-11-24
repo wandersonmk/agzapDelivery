@@ -11,28 +11,34 @@ const route = useRoute()
 const router = useRouter()
 const slug = route.params.slug as string
 
-const { carrinho, carrinhoVazio, limparCarrinho } = useCarrinho()
+const { carrinho, carrinhoVazio, limparCarrinho, carregarCarrinho } = useCarrinho()
 const { buscarRestaurantePorSlug, criarPedidoOnline } = useCardapioPublico()
 const toast = useToastSafe()
-
-// Redirecionar se carrinho vazio
-if (carrinhoVazio.value) {
-  router.push(`/cardapio/${slug}`)
-}
 
 // Buscar dados do restaurante
 const restaurante = ref<RestaurantePublico | null>(null)
 const carregando = ref(true)
 
 onMounted(async () => {
+  // Garantir que o carrinho foi carregado do localStorage
+  carregarCarrinho()
+  await nextTick()
+
   const rest = await buscarRestaurantePorSlug(slug)
   if (!rest) {
     toast?.error('Restaurante não encontrado')
-    router.push(`/cardapio/${slug}`)
+    await navigateTo(`/cardapio/${slug}`)
     return
   }
   restaurante.value = rest
   carregando.value = false
+  
+  // Verificar carrinho depois de tudo carregar
+  await nextTick()
+  if (carrinhoVazio.value) {
+    toast?.warning('Seu carrinho está vazio')
+    await navigateTo(`/cardapio/${slug}`)
+  }
 })
 
 // Estado do formulário

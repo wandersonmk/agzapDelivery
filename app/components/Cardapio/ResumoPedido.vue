@@ -37,37 +37,27 @@ const resumirComplementos = (complementos: string[]) => {
       <div
         v-for="item in carrinho.itens"
         :key="item.id"
-        class="flex gap-3 pb-4 border-b border-gray-200 dark:border-gray-700 last:border-0"
+        class="pb-4 border-b border-gray-200 dark:border-gray-700 last:border-0"
       >
-        <!-- Imagem -->
-        <img
-          :src="item.imagem"
-          :alt="item.nome"
-          class="w-16 h-16 rounded-lg object-cover"
-        />
-
-        <!-- Detalhes -->
-        <div class="flex-1 min-w-0">
-          <div class="flex items-start justify-between gap-2">
-            <div class="flex-1">
-              <h3 class="font-medium text-gray-900 dark:text-white text-sm">
-                {{ item.nome }}
-              </h3>
-              <p v-if="item.tamanho" class="text-xs text-gray-600 dark:text-gray-400">
-                Tamanho: {{ item.tamanho }}
-              </p>
-              <p v-if="item.complementos.length > 0" class="text-xs text-gray-600 dark:text-gray-400">
-                {{ resumirComplementos(item.complementos) }}
-              </p>
-            </div>
-            <span class="text-sm font-bold text-gray-900 dark:text-white whitespace-nowrap">
-              {{ item.quantidade }}x {{ formatarMoeda(item.preco) }}
-            </span>
+        <div class="flex items-start justify-between gap-2">
+          <div class="flex-1">
+            <h3 class="font-medium text-gray-900 dark:text-white text-sm">
+              {{ item.nome }}
+            </h3>
+            <p v-if="item.tamanho" class="text-xs text-gray-600 dark:text-gray-400">
+              Tamanho: {{ item.tamanho }}
+            </p>
+            <p v-if="item.complementos.length > 0" class="text-xs text-gray-600 dark:text-gray-400">
+              {{ resumirComplementos(item.complementos) }}
+            </p>
           </div>
-          <p class="text-sm font-medium text-orange-600 dark:text-orange-400 mt-1">
-            {{ formatarMoeda(item.subtotal) }}
-          </p>
+          <span class="text-sm font-bold text-gray-900 dark:text-white whitespace-nowrap">
+            {{ item.quantidade }}x {{ formatarMoeda(item.preco_unitario) }}
+          </span>
         </div>
+        <p class="text-sm font-medium text-orange-600 dark:text-orange-400 mt-1">
+          {{ formatarMoeda(item.subtotal) }}
+        </p>
       </div>
     </div>
 

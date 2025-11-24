@@ -9,19 +9,22 @@ const emit = defineEmits<{
 }>()
 
 const { carrinho, carrinhoVazio, atualizarQuantidade, removerItem, podeFinalizarPedido } = useCarrinho()
-const router = useRouter()
+const toast = useToastSafe()
 
 // Ir para checkout
-const irParaCheckout = () => {
+const irParaCheckout = async () => {
   if (!carrinho.value) return
   
-  const pedidoMinimo = 20 // TODO: pegar do restaurante
+  const pedidoMinimo = 20
   if (!podeFinalizarPedido(pedidoMinimo)) {
+    const faltante = pedidoMinimo - carrinho.value.subtotal
+    toast?.warning(`Adicione mais R$ ${faltante.toFixed(2)} em produtos para finalizar o pedido`)
     return
   }
   
-  router.push(`/cardapio/${carrinho.value.empresa_slug}/checkout`)
   emit('fechar')
+  await nextTick()
+  await navigateTo('/checkout')
 }
 
 // Fechar ao clicar fora
@@ -151,7 +154,6 @@ onUnmounted(() => {
               <!-- Botão Finalizar -->
               <button
                 @click="irParaCheckout"
-                :disabled="!podeFinalizarPedido(20)"
                 :class="[
                   'w-full py-4 rounded-xl font-bold transition-all',
                   podeFinalizarPedido(20)
